@@ -1,0 +1,1 @@
+program wanpedleo.aleo { mapping account: address => u64; ... }
