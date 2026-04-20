@@ -1,76 +1,109 @@
 # woosdk
 
+![Banner WooSDK](./assets/logo.png)
+
 PT - BR
 
-Woosdk e uma solução para devs criarem layer 3 facilmente sobre a Aleo. 
+WooSDK é uma solução para desenvolvedores criarem Layer 3 de forma simplificada sobre a rede Aleo.
 
-Estrutura de nosso sdk. 
+Estrutura do SDK
 
-Contrato Gênesis na L1: Âncora os lotes , staking e ponte.
+Contrato Gênesis (L1): Responsável por ancorar os lotes, gerenciar o staking e realizar a ponte.
 
-Nó L3: Mantém o estado local da layer 3 , e atua como sequenciador.
+Nó L3: Mantém o estado local da Layer 3 e atua como o sequenciador da rede.
 
-Zk prover: gera e verifica provas zero-knowledge para as transações.
+ZK Prover: Gera e verifica as provas de conhecimento zero (Zero-Knowledge Proofs) para as transações.
 
-Cli: ferramenta para gerenciar e criar novas chains.
+CLI: Ferramenta de linha de comando para gerenciar e criar novas chains.
 
+Wallet: Interface para interagir com a L3, com suporte a RPC customizado, transferências, DEX e deploy de contratos.
 
-Wallet: Interage com a L3 , Rpc customizado, transferências , dex , deploy de contratos. 
 
 requisitos
 
-Node.js:	18+	 nodejs.org
-Rust:	1.70+	 rustup.rs
-Leo:	≥ 2.0.0	 developer.aleo.org/leo
+Node.js: v18+ (nodejs.org)
 
-adicione o leo no patch
+Rust: v1.70+ (rustup.rs)
+
+Leo: ≥ v2.0.0 (developer.aleo.org/leo)
+
+Nota: adicione o executável do Leo ao seu PATH.
+
+
 
 instalar
 
+```bash
 git clone https://github.com/riquelima805/woosdk.git
-
 cd woosdk
+npm install
+```
 
-intale a dependecias. 
+Instale as dependências. 
 
 em woosdk:
 
+```bash
 npm install
+```
 
-intale da wallet
+Instale as dependências da Wallet
 
+```bash
 cd woo-wallet
-
 npm install
+```
 
-intale do zk
+Prepare o ZK-Prover:
 
-cd ..
-cd zk-prover
-cargo run build
+```bash
+cd ../zk-prover
+cargo build
+```
 
-.. retorne a pasta woosdk adicione uma chave privada no .env precia ter creditos na tet net pegue aqui:
-https://faucet.aleo.org/
+Configuração de Ambiente:
+Retorne à pasta raiz (woosdk) e adicione sua chave privada no arquivo .env.
+Você precisa de créditos na Testnet. Obtenha-os aqui: faucet.aleo.org
 
-ainda em woosdk de o comando para o cli ele ira imprementar mintar a moeda de gas inicial e ativar a rede.. 
 
-node cli.mjs full --chain-id 888 --gas-token-id 1 --sequencer aleo1s69ylwn0x29fudj6jep5y2ljlr36964537zpe0vexmk5syyjpy8swdazp3
+Implementar a Rede via CLI:
+Este comando irá implementar o sistema, realizar o mint da moeda de gas inicial e ativar a rede.
 
-mude a chin id. mude o endereço de sequencer esse sera o mesmo usado como valt da ponte tambem.. 
+```bash
+node cli.mjs full --chain-id 888 --gas-token-id 1 --sequencer <ENDEREÇO_DO_SEQUENCER>
+```
 
- rode o rpc pelo comando.. npx tsx src\rpc.ts. em outro terminal va em woosdk\zk-prover . de cargo run --release 
+Importante: Mude o chain-id e o endereço do sequencer. O endereço do sequencer será o mesmo utilizado como Vault da ponte.
 
- em outro terminal va em woo-wallet de npm run dev. 
 
- voce pode subir contato de tokens teste na wallet e chamar a funçao mint .. tabm pode adicionar 2 tokens na parte defi um x e um y depoitar e depoi chaamara a funçao de liuidez do ctt. por enuanto o valt o cerve para 2 tokens.. 
+Rodar os Serviços:
 
- voce pode ir em templates na pasta do eu genses e da ese comando ara enviar aleo test net para a l3.. isso mintara um wampedaleo... 
 
- leo execute bridge_in 2011u64 1u64 5000000u64 endereço que vai receber na l1 endereço do vault mesmo do sequencer --broadcast --network testnet --endpoint "endipoint v2 da aleo" --private-key "chave"
+RPC: Em um terminal na raiz: npx tsx src/rpc.ts
 
- atualmente a bridge aceita qualquer endereço como valt isso mexeremo mas tarde, porem o rpc so conta os pasados o woenwr como vaut..  tambem ainda nao imprementamo o aue na l3 .. 
+ZK-Prover: No terminal em woosdk/zk-prover: cargo run --release
 
- 
+Wallet: No terminal em woo-wallet: npm run dev
+
+
+Testando as Funcionalidades
+
+Tokens e DeFi: Na wallet, você pode fazer deploy de tokens de teste e chamar a função mint. Na seção DeFi, é possível adicionar dois tokens (X e Y), depositar e chamar a função de liquidez do contrato. Atualmente, o Vault suporta dois tokens.
+
+Bridge (L1 → L3):
+Para enviar Aleo Testnet para a L3 (gerando Wrapped Aleo), utilize o comando na pasta templates do seu contrato gênesis:
+
+```bash
+leo execute bridge_in 2011u64 1u64 5000000u64 <ENDEREÇO_L1_RECEBER> <ENDEREÇO_VAULT> --broadcast --network testnet --endpoint "https://api.explorer.aleo.org/v1/testnet3" --private-key "SUA_CHAVE"
+```
+
+Observações de Desenvolvimento
+
+Atualmente, a bridge aceita qualquer endereço como Vault; isso será restrito em atualizações futuras.
+
+O RPC, por enquanto, contabiliza apenas os dados passados pelo proprietário  como Vault.
+
+A implementação de autenticação (Auth) na L3 ainda está em desenvolvimento.
 
  
 
