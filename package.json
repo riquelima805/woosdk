@@ -1,0 +1,43 @@
+{
+  "name": "woosdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "woo-cli": "./cli.mjs"
+  },
+  "scripts": {
+    "build": "tsc",
+    "cli": "node cli.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bn.js": "^5.2.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
+    "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "@aleohq/sdk": "^0.6.9",
+    "axios": "^1.15.0",
+    "chalk": "^4.1.2",
+    "commander": "^14.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "keccak256": "^1.0.6",
+    "level": "^10.0.0",
+    "merkletreejs": "^0.6.0",
+    "uuid": "^13.0.0",
+    "ws": "^8.20.0"
+  }
+}
