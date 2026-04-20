@@ -62,7 +62,15 @@ mude a chin id. mude o endereço de sequencer esse sera o mesmo usado como valt 
 
  em outro terminal va em woo-wallet de npm run dev. 
 
- voce pode ubir contato de tokens tete na wallet e chamar a funçao mint .. tabm pode adicionar 2 tokens na parte defi um x e um y depoitar e depoi chaamara a funçao de liuidez do ctt. por enuanto o valt o cerve para 2 tokens.. 
+ voce pode subir contato de tokens teste na wallet e chamar a funçao mint .. tabm pode adicionar 2 tokens na parte defi um x e um y depoitar e depoi chaamara a funçao de liuidez do ctt. por enuanto o valt o cerve para 2 tokens.. 
+
+ voce pode ir em templates na pasta do eu genses e da ese comando ara enviar aleo test net para a l3.. isso mintara um wampedaleo... 
+
+ leo execute bridge_in 2011u64 1u64 5000000u64 endereço que vai receber na l1 endereço do vault mesmo do sequencer --broadcast --network testnet --endpoint "endipoint v2 da aleo" --private-key "chave"
+
+ atualmente a bridge aceita qualquer endereço como valt isso mexeremo mas tarde, porem o rpc so conta os pasados o woenwr como vaut..  tambem ainda nao imprementamo o aue na l3 .. 
+
+ 
 
  
 
