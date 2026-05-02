@@ -1,0 +1,33 @@
+# Dockerfile.cli — imagem usada UMA VEZ para deploy + spawn_chain
+# Tem Leo CLI + Rust. Não precisa ficar rodando depois do setup.
+
+FROM node:20-slim AS base
+
+RUN apt-get update && apt-get install -y \
+    curl git build-essential libssl-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instala Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Instala Leo CLI
+# Tenta pelo script oficial, fallback via cargo
+RUN curl -L https://raw.githubusercontent.com/ProvableHQ/leo/mainline/install.sh | bash \
+    || cargo install leo-lang --locked
+ENV PATH="/root/.aleo/bin:${PATH}"
+
+WORKDIR /app
+
+# Instala dependências Node
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Copia o CLI e arquivos de suporte
+COPY cli.mjs ./
+COPY src/ ./src/
+
+# Cria pastas que o CLI vai precisar
+RUN mkdir -p templates sandbox
+
+CMD ["node", "cli.mjs", "--help"]

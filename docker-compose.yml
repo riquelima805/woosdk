@@ -1,0 +1,134 @@
+version: '3.9'
+
+services:
+
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: l3_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: l3user
+      POSTGRES_PASSWORD: l3pass
+      POSTGRES_DB: l3db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U l3user -d l3db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  
+  zk_prover:
+    build:
+      context: ./zk-prover-mock
+    container_name: l3_zk_prover
+    restart: unless-stopped
+    ports:
+      - "3030:3030"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3030/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  
+  cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.cli
+    container_name: l3_cli
+    profiles:
+      - cli
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env.test
+    environment:
+      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db"
+      ZK_PROVER_URL: "http://zk_prover:3030"
+    volumes:
+      - ./templates:/app/templates
+      - ./sandbox:/app/sandbox
+    working_dir: /app
+
+  
+  node1:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: l3_node1
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      zk_prover:
+        condition: service_healthy
+    env_file: .env.test
+    environment:
+      NODE_ID: node1
+      HTTP_PORT: "8545"
+      P2P_PORT: "6000"
+      SEQUENCERS_LIST: "node1"
+      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db"
+      ZK_PROVER_URL: "http://zk_prover:3030"
+    ports:
+      - "8545:8545"
+      - "6000:6000"
+    volumes:
+      - ./templates:/app/templates
+      - ./sandbox:/app/sandbox
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8545/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+ 
+  node2:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: l3_node2
+    restart: unless-stopped
+    depends_on:
+      node1:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    env_file: .env.test
+    environment:
+      NODE_ID: node2
+      HTTP_PORT: "8546"
+      P2P_PORT: "6001"
+      SEQUENCERS_LIST: "node1"
+      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db"
+      ZK_PROVER_URL: "http://zk_prover:3030"
+      PEERS: "ws://node1:6000"
+    ports:
+      - "8546:8546"
+      - "6001:6001"
+    volumes:
+      - ./templates:/app/templates
+      - ./sandbox:/app/sandbox
+
+ 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: l3_pgadmin
+    restart: unless-stopped
+    depends_on: [postgres]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@l3.local
+      PGADMIN_DEFAULT_PASSWORD: l3pass
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    profiles:
+      - tools
+
+volumes:
+  pg_data:
