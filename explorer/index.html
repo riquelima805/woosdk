@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Woo L3 Explorer Pro</title>
+    <style>
+        /* --- CSS BASE (Brutalismo Preto e Branco) --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #eef2f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1e1e2a;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .app-container {
+            min-height: 100vh; display: flex; justify-content: center; align-items: flex-start;
+            padding: 20px; background: radial-gradient(circle at 20% 30%, #d9e2ec, #cbd5e1);
+        }
+        .wrapper {
+            max-width: 750px;
+            width: 100%; background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-radius: 32px; box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            padding: 24px; border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 28px; }
+        .logo { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #1e1e2a; display: flex; align-items: center; gap: 8px; }
+        .logo span { font-weight: 600; font-size: 14px; color: #5e6c7c; margin-left: 4px; text-transform: uppercase; border: 2px solid #5e6c7c; padding: 2px 8px; border-radius: 20px;}
+        .settings-btn { background: #ffffff; border: 2px solid #1e1e2a; color: #1e1e2a; padding: 8px 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 4px 4px 0 #000; display: flex; align-items: center; justify-content: center; }
+        .settings-btn:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0f0f15; }
+        .card { background: #ffffff; border-radius: 24px; padding: 24px 20px; margin-bottom: 20px; border: 3px solid #1e1e2a; box-shadow: 6px 6px 0 #1e1e2a; }
+        .balance-card { text-align: center; padding: 28px 20px; }
+        .balance-label { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #5e6c7c; margin-bottom: 8px; }
+        .balance-value { font-size: 38px; font-weight: 800; letter-spacing: -1px; color: #1e1e2a; line-height: 1.1; margin-bottom: 10px; word-break: break-all; }
+        .send-form-group { margin-bottom: 18px; }
+        .send-form-group label { display: block; margin-bottom: 6px; color: #1e1e2a; font-size: 14px; font-weight: 800; text-transform: uppercase; }
+        .send-input { background: #ffffff; border: 2px solid #1e1e2a; border-radius: 18px; padding: 16px 18px; color: #1e1e2a; font-size: 15px; width: 100%; transition: all 0.2s ease; box-shadow: inset 2px 2px 0 #e2e8f0; font-family: monospace; }
+        .send-input:focus { outline: none; border-color: #000000; box-shadow: 0 0 0 3px rgba(0,0,0,0.1); }
+        .btn-primary { width: 100%; padding: 12px 20px; border: 2px solid #1e1e2a; border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.15s; box-shadow: 4px 4px 0 #000; background: #1e1e2a; color: white; margin-top: 10px; }
+        .btn-primary:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0f0f15; }
+        .settings-panel { background: #ffffff; padding: 20px; margin-bottom: 24px; border-radius: 24px; border: 3px solid #1e1e2a; box-shadow: 6px 6px 0 #1e1e2a; }
+        .status-bar { margin-top: 15px; padding: 14px 18px; background: #ffffff; border-radius: 16px; text-align: center; font-size: 14px; font-weight: 800; color: #1e1e2a; border: 3px solid #1e1e2a; box-shadow: 4px 4px 0 #1e1e2a; }
+        
+        /* --- ESTILOS EXTRAS PARA O EXPLORER --- */
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav-btn { flex: 1; background: #f8fafc; border: 2px solid #1e1e2a; color: #1e1e2a; padding: 12px 0; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; transition: all 0.15s; box-shadow: 3px 3px 0 #1e1e2a; text-transform: uppercase; }
+        .nav-btn.active { background: #1e1e2a; color: white; box-shadow: 3px 3px 0 #0f0f15; }
+        .nav-btn:hover:not(.active) { transform: translate(1px, 1px); box-shadow: 2px 2px 0 #1e1e2a; }
+
+        /* Abas de Pesquisa (Menores) */
+        .search-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+        .search-tab { flex: 1; background: #fff; border: 2px solid #1e1e2a; border-radius: 8px; padding: 8px; font-size: 12px; font-weight: 800; cursor: pointer; transition: 0.15s; }
+        .search-tab.active { background: #1e1e2a; color: #fff; }
+        
+        .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-box { background: #f8fafc; border: 2px solid #1e1e2a; border-radius: 16px; padding: 15px; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: 800; color: #1e1e2a; }
+        .stat-label { font-size: 12px; font-weight: 800; color: #5e6c7c; text-transform: uppercase; letter-spacing: 1px; }
+
+        .list-item { background: #f8fafc; border-radius: 16px; padding: 16px; border: 2px solid #1e1e2a; margin-bottom: 12px; word-break: break-all; }
+        .list-item h4 { font-weight: 800; font-size: 16px; margin-bottom: 10px; color: #1e1e2a; border-bottom: 2px dashed #1e1e2a; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;}
+        .list-item p { font-size: 13px; font-family: monospace; color: #1e1e2a; margin-bottom: 6px; }
+        .list-item strong { color: #5e6c7c; text-transform: uppercase; font-size: 11px; font-family: 'Inter', sans-serif; letter-spacing: 1px; }
+        
+        .badge { background: #1e1e2a; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-family: 'Inter'; font-weight: 800; display: inline-block; }
+        .badge.outline { background: transparent; color: #1e1e2a; border: 2px solid #1e1e2a; }
+        .badge.success { background: #e6f4ea; color: #1e8e3e; border: 2px solid #1e8e3e; }
+        
+        .hidden { display: none !important; }
+        .tx-type { display: inline-block; padding: 4px 8px; border-radius: 8px; font-weight: 800; font-size: 11px; border: 2px solid #1e1e2a; }
+        
+        /* Grid de tokens */
+        .token-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .token-card { background: #fff; border: 2px solid #1e1e2a; padding: 10px; border-radius: 12px; text-align: center; }
+        .token-card span { display: block; font-size: 11px; color: #5e6c7c; text-transform: uppercase; font-weight: 800; }
+        .token-card strong { font-size: 16px; color: #1e1e2a; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="wrapper">
+        
+        <div class="header">
+            <div class="logo">
+                WOO <span>L3 Explorer</span>
+            </div>
+            <button class="settings-btn" id="btn-toggle-settings" title="Configurações RPC">
+                ⚙️ RPC
+            </button>
+        </div>
+
+        <div id="settings-panel" class="settings-panel hidden">
+            <div class="send-form-group">
+                <label>Node RPC Endpoint</label>
+                <input type="text" id="rpc-url" class="send-input" value="http://localhost:8545">
+            </div>
+            <button class="btn-primary" id="btn-save-rpc">Salvar / Conectar</button>
+        </div>
+
+        <div class="card balance-card">
+            <div class="balance-label">State Root Atual L3</div>
+            <div class="balance-value" id="current-stateroot" style="font-size: 18px;">Conectando...</div>
+            
+            <div class="grid-stats" style="margin-top: 20px;">
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-batch">-</div>
+                    <div class="stat-label">Lote Atual</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-mempool">-</div>
+                    <div class="stat-label">Mempool (TXs)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="search-tabs">
+                <button class="search-tab active" data-type="tx">Busca TX</button>
+                <button class="search-tab" data-type="address">Endereço</button>
+                <button class="search-tab" data-type="token">Token</button>
+            </div>
+            <div class="send-form-group" style="margin-bottom: 10px;">
+                <input type="text" id="search-input" class="send-input" placeholder="Insira o Hash (0x...)">
+            </div>
+            <button class="btn-primary" id="btn-search">Pesquisar na Rede</button>
+            <div id="search-result" class="hidden" style="margin-top: 15px;"></div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-btn active" id="tab-batches">Lotes L1</button>
+            <button class="nav-btn" id="tab-mempool">Mempool L3</button>
+        </div>
+
+        <div id="view-batches" class="card">
+            <h3 style="margin-bottom: 15px; font-weight: 800; border-bottom: 2px solid #1e1e2a; padding-bottom: 10px;">Histórico de Lotes</h3>
+            <div id="batches-list">
+                <p style="text-align: center; font-weight: 600;">Carregando...</p>
+            </div>
+        </div>
+
+        <div id="view-mempool" class="card hidden">
+            <h3 style="margin-bottom: 15px; font-weight: 800; border-bottom: 2px solid #1e1e2a; padding-bottom: 10px;">Fila de Processamento</h3>
+            <div id="mempool-list">
+                <p style="text-align: center; font-weight: 600;">Carregando...</p>
+            </div>
+        </div>
+
+        <div class="status-bar" id="connection-status">
+            🔴 Desconectado
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let RPC_URL = localStorage.getItem('woo_rpc_url') || 'http://localhost:8545';
+    document.getElementById('rpc-url').value = RPC_URL;
+
+    const elStatus = document.getElementById('connection-status');
+    const elStateRoot = document.getElementById('current-stateroot');
+    const elStatBatch = document.getElementById('stat-batch');
+    const elStatMempool = document.getElementById('stat-mempool');
+    const listBatches = document.getElementById('batches-list');
+    const listMempool = document.getElementById('mempool-list');
+    const searchResult = document.getElementById('search-result');
+    const searchInput = document.getElementById('search-input');
+
+    // UI Toggles RPC
+    document.getElementById('btn-toggle-settings').addEventListener('click', () => {
+        document.getElementById('settings-panel').classList.toggle('hidden');
+    });
+
+    document.getElementById('btn-save-rpc').addEventListener('click', () => {
+        RPC_URL = document.getElementById('rpc-url').value.trim();
+        localStorage.setItem('woo_rpc_url', RPC_URL);
+        document.getElementById('settings-panel').classList.add('hidden');
+        init();
+    });
+
+    // Abas Principais
+    const tabBatches = document.getElementById('tab-batches');
+    const tabMempool = document.getElementById('tab-mempool');
+    const viewBatches = document.getElementById('view-batches');
+    const viewMempool = document.getElementById('view-mempool');
+
+    tabBatches.addEventListener('click', () => {
+        tabBatches.classList.add('active'); tabMempool.classList.remove('active');
+        viewBatches.classList.remove('hidden'); viewMempool.classList.add('hidden');
+        fetchBatches();
+    });
+
+    tabMempool.addEventListener('click', () => {
+        tabMempool.classList.add('active'); tabBatches.classList.remove('active');
+        viewMempool.classList.remove('hidden'); viewBatches.classList.add('hidden');
+        fetchMempool();
+    });
+
+    // Lógica das Abas de Pesquisa
+    const searchTabs = document.querySelectorAll('.search-tab');
+    let currentSearchType = 'tx';
+
+    searchTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            searchTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentSearchType = tab.dataset.type;
+            
+            if(currentSearchType === 'tx') searchInput.placeholder = "Insira o Hash (0x...)";
+            if(currentSearchType === 'address') searchInput.placeholder = "Insira a Carteira (aleo1...)";
+            if(currentSearchType === 'token') searchInput.placeholder = "Insira o Token ID (ex: token11.aleo)";
+        });
+    });
+
+    // Requisição Genérica JSON-RPC
+    async function rpcCall(method, params = []) {
+        const res = await fetch(RPC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: "2.0", method, params, id: 1 })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        return data.result;
+    }
+
+    // Ação de Busca
+    document.getElementById('btn-search').addEventListener('click', async () => {
+        const query = searchInput.value.trim();
+        if(!query) return;
+        
+        searchResult.classList.remove('hidden');
+        searchResult.innerHTML = '<p style="font-weight:bold; text-align:center;">Buscando dados na L3...</p>';
+
+        try {
+            if (currentSearchType === 'tx') {
+                const tx = await rpcCall("woo_getTransactionReceipt", [query]);
+                if (tx) {
+                    searchResult.innerHTML = `
+                        <div class="list-item" style="border-color: #000; background: #eef2f6;">
+                            <h4>Transação Encontrada <span class="badge success">Confirmada</span></h4>
+                            <p><strong>Lote L1:</strong> #${tx.blockNumber}</p>
+                            <p><strong>Hash:</strong> ${tx.transactionHash}</p>
+                            <p><strong>De:</strong> ${tx.from}</p>
+                            <p><strong>Para:</strong> ${tx.to || 'Contrato / Bridge'}</p>
+                        </div>`;
+                } else {
+                    searchResult.innerHTML = `<p style="font-weight:bold; color: #d32f2f;">Transação não encontrada ou pendente na Mempool.</p>`;
+                }
+            } 
+            else if (currentSearchType === 'address') {
+                const nonce = await rpcCall("woo_getNonce", [query]);
+                const portfolio = await rpcCall("defi_getUserPortfolio", [query]);
+                
+                let tokensHtml = '';
+                if (portfolio && Object.keys(portfolio).length > 0) {
+                    for (const [token, balance] of Object.entries(portfolio)) {
+                        tokensHtml += `<div class="token-card"><span>${token}</span><strong>${balance}</strong></div>`;
+                    }
+                } else {
+                    tokensHtml = `<p style="font-size:12px; color:#5e6c7c;">Nenhum token encontrado.</p>`;
+                }
+
+                searchResult.innerHTML = `
+                    <div class="list-item" style="border-color: #000; background: #eef2f6;">
+                        <h4>Detalhes da Carteira</h4>
+                        <p><strong>Endereço:</strong> <br>${query}</p>
+                        <p><strong>Total de TXs (Nonce):</strong> ${nonce}</p>
+                        <h4 style="margin-top:15px; border-top: 2px dashed #1e1e2a; padding-top:10px;">Portfólio (Ativos)</h4>
+                        <div class="token-grid">${tokensHtml}</div>
+                    </div>`;
+            }
+            else if (currentSearchType === 'token') {
+                const stats = await rpcCall("defi_getTokenStats", [query]);
+                if (stats) {
+                    searchResult.innerHTML = `
+                        <div class="list-item" style="border-color: #000; background: #eef2f6;">
+                            <h4>Status do Contrato/Token</h4>
+                            <p><strong>ID:</strong> ${stats.tokenId}</p>
+                            <p><strong>Nome:</strong> ${stats.name} (${stats.symbol})</p>
+                            <p><strong>Supply Circulante:</strong> ${stats.totalSupply}</p>
+                            <p><strong>Qtd Holders:</strong> ${stats.holdersCount}</p>
+                            <p><strong>Criador:</strong> <br>${stats.owner}</p>
+                        </div>`;
+                } else {
+                    searchResult.innerHTML = `<p style="font-weight:bold; color: #d32f2f;">Token não registrado na L3.</p>`;
+                }
+            }
+        } catch (e) {
+            searchResult.innerHTML = `<p style="font-weight:bold; color: #d32f2f;">Erro ao buscar: ${e.message}</p>`;
+        }
+    });
+
+    // --- FUNÇÕES DE FETCH GLOBAIS ---
+    async function fetchHealth() {
+        try {
+            const res = await fetch(`${RPC_URL}/health`);
+            if (!res.ok) throw new Error("Node Offline");
+            const data = await res.json();
+            
+            elStateRoot.innerText = data.state_root;
+            elStatBatch.innerText = data.current_batch;
+            elStatMempool.innerText = data.mempool_size;
+            
+            elStatus.innerText = `🟢 Conectado ao Node L3 (Peers: ${data.peers_connected})`;
+            elStatus.style.background = "#e6f4ea";
+            elStatus.style.borderColor = "#1e8e3e";
+            elStatus.style.color = "#1e8e3e";
+        } catch (e) {
+            elStatus.innerText = `🔴 Desconectado do RPC`;
+            elStatus.style.background = "#fce8e6";
+            elStatus.style.borderColor = "#d32f2f";
+            elStatus.style.color = "#d32f2f";
+        }
+    }
+
+    async function fetchBatches() {
+        try {
+            const res = await fetch(`${RPC_URL}/explorer/recent-batches`);
+            if (!res.ok) throw new Error("Erro");
+            const batches = await res.json();
+
+            if (batches.length === 0) {
+                listBatches.innerHTML = "<p style='text-align:center; font-weight:600;'>Aguardando criação de Lotes L1.</p>";
+                return;
+            }
+
+            let html = "";
+            batches.forEach(b => {
+                const dataStr = new Date(b.timestamp).toLocaleString();
+                html += `
+                    <div class="list-item">
+                        <h4>Lote #${b.id} <span class="badge">${b.tx_count} TXs</span></h4>
+                        <p><strong>State Root (L3):</strong> <br>${b.state_root}</p>
+                        <p><strong>Txs Hash (Merkle L1):</strong> <br>${b.txs_hash}</p>
+                        <p><strong>Data de Submissão:</strong> ${dataStr}</p>
+                    </div>
+                `;
+            });
+            listBatches.innerHTML = html;
+        } catch (e) {
+            listBatches.innerHTML = "<p style='text-align:center; color:#d32f2f; font-weight:bold;'>Falha ao carregar lotes.</p>";
+        }
+    }
+
+    async function fetchMempool() {
+        try {
+            const res = await fetch(`${RPC_URL}/explorer/mempool`);
+            if (!res.ok) throw new Error("Erro");
+            const txs = await res.json();
+
+            if (txs.length === 0) {
+                listMempool.innerHTML = "<p style='text-align:center; font-weight:600;'>Rede ociosa. Nenhuma transação pendente.</p>";
+                return;
+            }
+
+            let html = "";
+            txs.forEach(tx => {
+                html += `
+                    <div class="list-item">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span class="tx-type">${tx.type}</span>
+                            <span class="badge outline">Nonce: ${tx.nonce}</span>
+                        </div>
+                        <p><strong>Hash (TxID):</strong> ${tx.txId}</p>
+                        <p><strong>De:</strong> ${tx.from}</p>
+                        ${tx.to ? `<p><strong>Para:</strong> ${tx.to}</p>` : ''}
+                        ${tx.contract ? `<p><strong>Alvo (Contrato):</strong> ${tx.contract}</p>` : ''}
+                        ${tx.amount ? `<p><strong>Valor:</strong> ${tx.amount}</p>` : ''}
+                    </div>
+                `;
+            });
+            listMempool.innerHTML = html;
+        } catch (e) {
+            listMempool.innerHTML = "<p style='text-align:center; color:#d32f2f; font-weight:bold;'>Falha ao carregar Mempool.</p>";
+        }
+    }
+
+    function init() {
+        fetchHealth();
+        if(tabBatches.classList.contains('active')) fetchBatches();
+        if(tabMempool.classList.contains('active')) fetchMempool();
+    }
+
+    setInterval(init, 6000);
+    init();
+</script>
+</body>
+</html>
