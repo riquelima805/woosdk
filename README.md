@@ -31,6 +31,12 @@ To make a deposit from L1 to L3 via the CLI:
 
 docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1988 --token-id 0 --amount 1000 --receiver aleo1YOUR_ADDRESS_HERE
 
+new L1 bridge depoit: 
+
+```bash
+docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1876 --token-id 0 --amount 1000 --receiver aleo1RECEPTOR_AQUI
+```
+
 ⚠️ You will always need to deploy the DeFi contract and wanpedleo for the wallet to work properly. Both are located in the /ctt_contratos folder.
 
 
@@ -185,6 +191,14 @@ Para criar uma nova rede pelo Docker:
 
 ```bash
 docker compose --profile cli run --rm cli node cli.mjs full --chain-id 1988 --gas-token-id 1
+```
+
+deposito L1 para l3:
+
+new L1 bridge depoit: 
+
+```bash
+docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1876 --token-id 0 --amount 1000 --receiver aleo1RECEPTOR_AQUI
 ```
 
 Substitua 1988 pelo ID da rede e lembre-se de alterar o endereço do sequenciador no .env.test
