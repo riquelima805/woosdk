@@ -1,7 +1,7 @@
 version: '3.9'
-
+ 
 services:
-
+ 
   
   postgres:
     image: postgres:16-alpine
@@ -20,7 +20,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
+ 
   
   zk_prover:
     build:
@@ -34,8 +34,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-
+ 
   
+  # Uso: docker compose run --rm cli node cli.mjs full -c 1988 -g 1
   cli:
     build:
       context: .
@@ -48,14 +49,14 @@ services:
         condition: service_healthy
     env_file: .env.test
     environment:
-      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db"
+      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db?sslmode=disable"
       ZK_PROVER_URL: "http://zk_prover:3030"
     volumes:
       - ./templates:/app/templates
       - ./sandbox:/app/sandbox
     working_dir: /app
-
-  
+ 
+  # ─── NODE 1 (sequencer líder) ──────────────────────────────────────────────
   node1:
     build:
       context: .
@@ -73,7 +74,7 @@ services:
       HTTP_PORT: "8545"
       P2P_PORT: "6000"
       SEQUENCERS_LIST: "node1"
-      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db"
+      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db?sslmode=disable"
       ZK_PROVER_URL: "http://zk_prover:3030"
     ports:
       - "8545:8545"
@@ -86,8 +87,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 15
-
  
+  
   node2:
     build:
       context: .
@@ -105,7 +106,7 @@ services:
       HTTP_PORT: "8546"
       P2P_PORT: "6001"
       SEQUENCERS_LIST: "node1"
-      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db"
+      DATABASE_URL: "postgresql://l3user:l3pass@postgres:5432/l3db?sslmode=disable"
       ZK_PROVER_URL: "http://zk_prover:3030"
       PEERS: "ws://node1:6000"
     ports:
@@ -114,8 +115,8 @@ services:
     volumes:
       - ./templates:/app/templates
       - ./sandbox:/app/sandbox
-
  
+  
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: l3_pgadmin
@@ -129,6 +130,6 @@ services:
       - "5050:80"
     profiles:
       - tools
-
+ 
 volumes:
   pg_data:
