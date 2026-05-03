@@ -1,0 +1,1027 @@
+{
+  "program": "woo_genesis_1988.aleo",
+  "structs": [],
+  "records": [
+    {
+      "path": [
+        "NetworkState"
+      ],
+      "fields": [
+        {
+          "name": "owner",
+          "ty": {
+            "Primitive": "Address"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "chain_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "gas_token_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "sequencer",
+          "ty": {
+            "Primitive": "Address"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "last_batch_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "last_state_root",
+          "ty": {
+            "Primitive": "Field"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "is_paused",
+          "ty": {
+            "Primitive": "Boolean"
+          },
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "path": [
+        "GasToken"
+      ],
+      "fields": [
+        {
+          "name": "owner",
+          "ty": {
+            "Primitive": "Address"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "amount",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "chain_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "path": [
+        "ValidatorTicket"
+      ],
+      "fields": [
+        {
+          "name": "owner",
+          "ty": {
+            "Primitive": "Address"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "staked_amount",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "chain_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "path": [
+        "BridgeReceipt"
+      ],
+      "fields": [
+        {
+          "name": "owner",
+          "ty": {
+            "Primitive": "Address"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "amount",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "token_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "chain_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "path": [
+        "BridgeOutReceipt"
+      ],
+      "fields": [
+        {
+          "name": "owner",
+          "ty": {
+            "Primitive": "Address"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "amount",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "fee_retained",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "token_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "chain_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "path": [
+        "RollupBatch"
+      ],
+      "fields": [
+        {
+          "name": "owner",
+          "ty": {
+            "Primitive": "Address"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "chain_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "batch_id",
+          "ty": {
+            "Primitive": {
+              "UInt": "U64"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "state_root",
+          "ty": {
+            "Primitive": "Field"
+          },
+          "mode": "None"
+        },
+        {
+          "name": "txs_hash",
+          "ty": {
+            "Primitive": "Field"
+          },
+          "mode": "None"
+        }
+      ]
+    }
+  ],
+  "mappings": [
+    {
+      "name": "authorized_relayers",
+      "key": {
+        "Primitive": "Address"
+      },
+      "value": {
+        "Primitive": "Boolean"
+      }
+    },
+    {
+      "name": "authorized_vaults",
+      "key": {
+        "Primitive": "Address"
+      },
+      "value": {
+        "Primitive": "Boolean"
+      }
+    },
+    {
+      "name": "is_initialized",
+      "key": {
+        "Primitive": {
+          "UInt": "U8"
+        }
+      },
+      "value": {
+        "Primitive": "Boolean"
+      }
+    },
+    {
+      "name": "roles",
+      "key": {
+        "Primitive": {
+          "UInt": "U8"
+        }
+      },
+      "value": {
+        "Primitive": "Address"
+      }
+    },
+    {
+      "name": "bridge_stats",
+      "key": {
+        "Primitive": {
+          "UInt": "U8"
+        }
+      },
+      "value": {
+        "Primitive": {
+          "UInt": "U64"
+        }
+      }
+    },
+    {
+      "name": "slashed_validators",
+      "key": {
+        "Primitive": "Address"
+      },
+      "value": {
+        "Primitive": "Boolean"
+      }
+    },
+    {
+      "name": "validator_stakes",
+      "key": {
+        "Primitive": "Address"
+      },
+      "value": {
+        "Primitive": {
+          "UInt": "U64"
+        }
+      }
+    },
+    {
+      "name": "supported_chains",
+      "key": {
+        "Primitive": {
+          "UInt": "U64"
+        }
+      },
+      "value": {
+        "Primitive": "Boolean"
+      }
+    }
+  ],
+  "storage_variables": [],
+  "functions": [
+    {
+      "name": "transfer_admin",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "new_admin",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "accept_admin",
+      "is_final": true,
+      "inputs": [],
+      "outputs": [
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "initialize_bridge",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "mainnet_vault",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "spawn_chain",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "chain_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "gas_token_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "sequencer",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "pause_network",
+      "is_final": false,
+      "inputs": [
+        {
+          "name": "state",
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "unpause_network",
+      "is_final": false,
+      "inputs": [
+        {
+          "name": "state",
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "emergency_drain",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "amount",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "admin_destination",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "commit_rollup",
+      "is_final": false,
+      "inputs": [
+        {
+          "name": "state",
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "chain_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "batch_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "state_root",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Field"
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "txs_hash",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Field"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "RollupBatch"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "mint_gas",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "chain_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "amount",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "receiver",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "GasToken"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "stake_validator",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "chain_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "stake_amount",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "vault",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "ValidatorTicket"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "slash_validator",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "state",
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "name": "ticket",
+          "ty": {
+            "Record": {
+              "path": [
+                "ValidatorTicket"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "NetworkState"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "slash_and_seize",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "validator_address",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "destination",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "vault",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "authorize_relayer",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "relayer",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "revoke_relayer",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "relayer",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "bridge_in",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "chain_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "token_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "amount",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "receiver",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "vault",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "BridgeReceipt"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    },
+    {
+      "name": "bridge_out",
+      "is_final": true,
+      "inputs": [
+        {
+          "name": "chain_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "token_id",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "amount",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "fee",
+          "ty": {
+            "Plaintext": {
+              "Primitive": {
+                "UInt": "U64"
+              }
+            }
+          },
+          "mode": "Public"
+        },
+        {
+          "name": "user_address",
+          "ty": {
+            "Plaintext": {
+              "Primitive": "Address"
+            }
+          },
+          "mode": "Public"
+        }
+      ],
+      "outputs": [
+        {
+          "ty": {
+            "Record": {
+              "path": [
+                "BridgeOutReceipt"
+              ],
+              "program": "woo_genesis_1988.aleo"
+            }
+          },
+          "mode": "None"
+        },
+        {
+          "ty": "Final",
+          "mode": "None"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "program": "woo_genesis_1988.aleo",
+  "version": "0.1.0",
+  "description": "",
+  "license": "MIT",
+  "leo": "4.0.1",
+  "dependencies": [
+    {
+      "name": "credits.aleo",
+      "location": "network",
+      "network": "testnet"
+    }
+  ],
+  "dev_dependencies": null
+}
