@@ -756,7 +756,7 @@ input[type="checkbox"] {
 
 /* --- FIX DE TAMANHOS GIGANTES (RIQUE) --- */
 
-/* 1. O Robô (Segurança e Labs) */
+
 .master-phrase-title img, 
 .dev-mode h3 img {
   width: 32px !important;
@@ -765,7 +765,7 @@ input[type="checkbox"] {
   vertical-align: middle;
 }
 
-/* 2. Ícones da Navegação (Wallet, DEX, Labs) */
+
 .nav-btn img {
   width: 20px !important;
   height: 20px !important;
@@ -773,21 +773,21 @@ input[type="checkbox"] {
   margin-bottom: 4px;
 }
 
-/* 3. Ícone do Logo (Topo) */
+
 .logo-icon img {
   width: 36px !important;
   height: 36px !important;
   object-fit: contain;
 }
 
-/* 4. Ícone de Configurações */
+
 .settings-btn img {
   width: 22px !important;
   height: 22px !important;
   object-fit: contain;
 }
 
-/* 5. Ícones dentro dos Botões (Enviar, Receber, Assinar) */
+
 .action-btn img, 
 .btn-sign-teleport img,
 .btn-secondary img {
@@ -796,7 +796,7 @@ input[type="checkbox"] {
   object-fit: contain;
 }
 
-/* 6. Ícones de Moedas na Lista e na DEX */
+
 .token-icon img,
 .dex-box h4 img {
   width: 24px !important;
@@ -804,7 +804,7 @@ input[type="checkbox"] {
   object-fit: contain;
 }
 
-/* 7. Imagens de Antena/RPC nas Configurações */
+
 .settings-row img, 
 .settings-icon {
   width: 20px !important;
@@ -812,7 +812,7 @@ input[type="checkbox"] {
   object-fit: contain;
 }
 
-/* Ajuste do Header para não amontoar */
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -821,7 +821,7 @@ input[type="checkbox"] {
   border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
-/* Fix das Abas de Navegação */
+
 .nav-tabs {
   display: flex;
   gap: 8px; /* Espaço entre os botões para não grudarem */
@@ -863,7 +863,7 @@ input[type="checkbox"] {
   margin-top: 10px;
 }
 
-/* Evitar que botões fiquem grudados */
+
 .action-buttons, .dex-btn-row, .confirm-btns {
   display: flex;
   gap: 12px; /* Isso separa os botões deposit/withdraw/swap */
@@ -934,7 +934,7 @@ input[type="checkbox"] {
   min-height: 45px;
 }
 
-/* O botão de ação de Swap na DEX */
+
 .swap-card .btn-sign-teleport {
   padding: 10px 12px !important; /* Mais fino */
   font-size: 14px !important;     /* Texto menor */
@@ -991,7 +991,7 @@ input[type="checkbox"] {
   display: block;
 }
 
-/* ── SWAP (Uniswap-style) ── */
+
 .swap-mode {
   display: flex;
   flex-direction: column;
@@ -1087,7 +1087,7 @@ input[type="checkbox"] {
   color: #1e1e2a;
 }
 
-/* Swap boxes */
+
 .swap-box {
   background: #f8fafc;
   border: 2px solid #1e1e2a;
@@ -1170,7 +1170,7 @@ input[type="checkbox"] {
 
 .max-btn:hover { background: #1e1e2a; color: #fff; }
 
-/* Flip button */
+
 .swap-flip-row {
   display: flex;
   justify-content: center;
@@ -1201,7 +1201,7 @@ input[type="checkbox"] {
   box-shadow: 1px 1px 0 #1e1e2a;
 }
 
-/* Swap details */
+
 .swap-details {
   background: #f1f5f9;
   border: 2px dashed #1e1e2a;
@@ -1459,7 +1459,7 @@ input[type="checkbox"] {
   padding: 8px 0;
 }
 
-/* ── Confirm box ── */
+
 .confirm-box {
   background: #fffbeb;
   border: 2px solid #1e1e2a;
@@ -1548,7 +1548,7 @@ input[type="checkbox"] {
   box-shadow: none;
 }
 
-/* ── Settings rows ── */
+
 .settings-row {
   display: flex;
   align-items: flex-start;
@@ -1562,7 +1562,7 @@ input[type="checkbox"] {
 .settings-field label { display: block; font-size: 13px; font-weight: 700; color: #1e1e2a; margin-bottom: 6px; }
 .settings-field input { width: 100%; }
 
-/* ── Sim toggle ── */
+
 .sim-toggle {
   display: flex;
   align-items: center;
@@ -1606,7 +1606,7 @@ input[type="checkbox"] {
   transform: translateX(20px);
 }
 
-/* ── History ── */
+
 .history-card { padding: 20px; }
 .history-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 14px; }
 .history-list { display: flex; flex-direction: column; gap: 8px; }
@@ -1645,7 +1645,7 @@ input[type="checkbox"] {
 .history-status.confirmed { color: #16a34a; }
 .history-status.pending   { color: #d97706; }
 
-/* ── NFT ── */
+
 .nft-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1686,10 +1686,10 @@ input[type="checkbox"] {
 /* ── Refresh btn ── */
 .refresh-btn { margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-/* ── Bridge hint ── */
+
 .bridge-hint { font-size: 13px; color: #5e6c7c; margin-bottom: 16px; line-height: 1.5; }
 
-/* ── Status spinner ── */
+
 .status-spinner {
   width: 12px;
   height: 12px;
@@ -1708,7 +1708,7 @@ input[type="checkbox"] {
 .status-bar.status-err     { color: #dc2626; border-color: #dc2626; }
 .status-bar.status-loading { color: #1e1e2a; }
 
-/* ── logo ── */
+
 .logo-group {
   display: flex;
   align-items: center;
@@ -1753,14 +1753,14 @@ input[type="checkbox"] {
   box-shadow: none;
 }
 
-/* ── add-token-row ── */
+
 .add-token-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-/* ── token balance item ── */
+
 .token-icon {
   width: 40px;
   height: 40px;
@@ -1775,15 +1775,13 @@ input[type="checkbox"] {
 
 .token-icon img { width: 24px; height: 24px; object-fit: contain; }
 
-/* ============================================================
-   DEFI V4 UNIFIED - NEO-BRUTALIST STYLE (RIQUE)
-   ============================================================ */
 
-/* 1. O Bloco do Cofre (Vault) Unificado */
+
+
 .vault-card-unified {
   background: #ffffff !important;
   border: 3px solid #1e1e2a !important;
-  box-shadow: 8px 8px 0px #1e1e2a !important; /* Sombra sólida maior */
+  box-shadow: 8px 8px 0px #1e1e2a !important; 
   padding: 24px !important;
   margin-top: 20px;
 }
@@ -1797,7 +1795,7 @@ input[type="checkbox"] {
 
 .vault-badge {
   background: #1e1e2a;
-  color: #00ff95; /* Verde neon para destacar a V4 */
+  color: #00ff95; 
   padding: 4px 12px;
   border-radius: 8px;
   font-size: 11px;
@@ -1844,7 +1842,7 @@ input[type="checkbox"] {
   background-size: 14px;
 }
 
-/* 2. Botões de Ação Unificados (Deposit/Withdraw) */
+
 .vault-actions-unified {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1883,9 +1881,9 @@ input[type="checkbox"] {
   box-shadow: none !important;
 }
 
-/* 3. Estilo para Remover Liquidez (Position Box) */
+
 .my-lp-section {
-  background: #fff5f8 !important; /* Um tom levemente diferente para destacar */
+  background: #fff5f8 !important; 
   border: 3px solid #1e1e2a !important;
   border-radius: 20px !important;
   padding: 18px !important;
@@ -1934,7 +1932,7 @@ input[type="checkbox"] {
   box-shadow: none;
 }
 
-/* 4. Ajustes finos de Info */
+
 .vault-info-row {
   background: #f8fafc;
   padding: 10px 15px;
