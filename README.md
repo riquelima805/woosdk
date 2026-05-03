@@ -150,6 +150,7 @@ developme
 
 ![Banner WooSDK](./assets/logo.png)
 
+PT-BR
 
 ⚠️ Aviso: Altere o chain-id e o endereço do sequenciador. O endereço do sequenciador será o mesmo utilizado na bridge por enquanto.
 
@@ -175,7 +176,7 @@ docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1988
 
 ⚠️ Precisará sempre fazer upload do contrato da DeFi e do wanpedleo para melhor funcionamento da wallet. Ambos estão na pasta /ctt_contratos.
 
-
+![Banner WooSDK](./assets/logo.png)
 
 
 PT - BR
