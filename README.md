@@ -21,7 +21,9 @@ This will only run the RPC node with "fake" proofs, for testing purposes only.
 
 To create a new network via Docker:
 
+```bash
 docker compose --profile cli run --rm cli node cli.mjs full --chain-id 1988 --gas-token-id 1
+```
 
 Replace 1988 with your network ID and remember to update the sequencer address in .env.test
 
@@ -165,15 +167,25 @@ Também adicionamos suporte a depósitos da L1 para L3 pelo CLI.
 
 A forma mais fácil para rodar um teste do nosso SDK é utilizando o Docker.
 
+```bash
 git clone https://github.com/riquelima805/woosdk.git
+```
+
+```bash
 cd woosdk
+```
+
+```bash
 docker compose up --build
+```
 
 Isso rodará apenas o terminal RPC com provas "fake", apenas para teste.
 
 Para criar uma nova rede pelo Docker:
 
+```bash
 docker compose --profile cli run --rm cli node cli.mjs full --chain-id 1988 --gas-token-id 1
+```
 
 Substitua 1988 pelo ID da rede e lembre-se de alterar o endereço do sequenciador no .env.test
 
