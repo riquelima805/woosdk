@@ -11,4 +11,4 @@ if [ -n "$PEERS" ]; then
     done
 fi
 
-exec node dist/rpc.js
+exec tsx src/rpc.ts
