@@ -1,9 +1,5 @@
 # woosdk
 
-![Banner WooSDK](./assets/logo.png)
-
-EN
-
 ⚠️ Note: Make sure to update the chain-id and the sequencer address. The sequencer address will be the same one used in the bridge for now.
 
 We also added support for L1 to L3 deposits via the CLI.
@@ -27,6 +23,11 @@ To make a deposit from L1 to L3 via the CLI:
 docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1988 --token-id 0 --amount 1000 --receiver aleo1YOUR_ADDRESS_HERE
 
 ⚠️ You will always need to deploy the DeFi contract and wanpedleo for the wallet to work properly. Both are located in the /ctt_contratos folder.
+
+
+![Banner WooSDK](./assets/logo.png)
+
+EN
 
 
 WooSDK is a solution for developers to create Layer 3 networks in a
