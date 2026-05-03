@@ -4,6 +4,31 @@
 
 EN
 
+⚠️ Note: Make sure to update the chain-id and the sequencer address. The sequencer address will be the same one used in the bridge for now.
+
+We also added support for L1 to L3 deposits via the CLI.
+
+The easiest way to run a test of our SDK is using Docker.
+
+git clone https://github.com/riquelima805/woosdk.git
+cd woosdk
+docker compose up --build
+
+This will only run the RPC node with "fake" proofs, for testing purposes only.
+
+To create a new network via Docker:
+
+docker compose --profile cli run --rm cli node cli.mjs full --chain-id 1988 --gas-token-id 1
+
+Replace 1988 with your network ID and remember to update the sequencer address in .env.test
+
+To make a deposit from L1 to L3 via the CLI:
+
+docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1988 --token-id 0 --amount 1000 --receiver aleo1YOUR_ADDRESS_HERE
+
+⚠️ You will always need to deploy the DeFi contract and wanpedleo for the wallet to work properly. Both are located in the /ctt_contratos folder.
+
+
 WooSDK is a solution for developers to create Layer 3 networks in a
 simplified way on top of the Aleo network.
 
@@ -123,6 +148,32 @@ developme
 
 
 ![Banner WooSDK](./assets/logo.png)
+
+
+⚠️ Aviso: Altere o chain-id e o endereço do sequenciador. O endereço do sequenciador será o mesmo utilizado na bridge por enquanto.
+
+Também adicionamos suporte a depósitos da L1 para L3 pelo CLI.
+
+A forma mais fácil para rodar um teste do nosso SDK é utilizando o Docker.
+
+git clone https://github.com/riquelima805/woosdk.git
+cd woosdk
+docker compose up --build
+
+Isso rodará apenas o terminal RPC com provas "fake", apenas para teste.
+
+Para criar uma nova rede pelo Docker:
+
+docker compose --profile cli run --rm cli node cli.mjs full --chain-id 1988 --gas-token-id 1
+
+Substitua 1988 pelo ID da rede e lembre-se de alterar o endereço do sequenciador no .env.test
+
+Para fazer um depósito da L1 para a L3 pelo CLI:
+
+docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1988 --token-id 0 --amount 1000 --receiver aleo1SEU_ENDERECO_AQUI
+
+⚠️ Precisará sempre fazer upload do contrato da DeFi e do wanpedleo para melhor funcionamento da wallet. Ambos estão na pasta /ctt_contratos.
+
 
 
 
