@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Woo L3 Explorer Pro</title>
     <style>
-        /* --- CSS BASE (Brutalismo Preto e Branco) --- */
+        
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background: #eef2f6;
@@ -149,7 +149,7 @@
         </div>
 
         <div class="status-bar" id="connection-status">
-            🔴 Desconectado
+             Desconectado
         </div>
 
     </div>
@@ -180,7 +180,7 @@
         init();
     });
 
-    // Abas Principais
+    
     const tabBatches = document.getElementById('tab-batches');
     const tabMempool = document.getElementById('tab-mempool');
     const viewBatches = document.getElementById('view-batches');
@@ -198,7 +198,7 @@
         fetchMempool();
     });
 
-    // Lógica das Abas de Pesquisa
+    
     const searchTabs = document.querySelectorAll('.search-tab');
     let currentSearchType = 'tx';
 
@@ -226,7 +226,7 @@
         return data.result;
     }
 
-    // Ação de Busca
+    
     document.getElementById('btn-search').addEventListener('click', async () => {
         const query = searchInput.value.trim();
         if(!query) return;
@@ -293,7 +293,7 @@
         }
     });
 
-    // --- FUNÇÕES DE FETCH GLOBAIS ---
+    
     async function fetchHealth() {
         try {
             const res = await fetch(`${RPC_URL}/health`);
@@ -304,12 +304,12 @@
             elStatBatch.innerText = data.current_batch;
             elStatMempool.innerText = data.mempool_size;
             
-            elStatus.innerText = `🟢 Conectado ao Node L3 (Peers: ${data.peers_connected})`;
+            elStatus.innerText = ` Conectado ao Node (Peers: ${data.peers_connected})`;
             elStatus.style.background = "#e6f4ea";
             elStatus.style.borderColor = "#1e8e3e";
             elStatus.style.color = "#1e8e3e";
         } catch (e) {
-            elStatus.innerText = `🔴 Desconectado do RPC`;
+            elStatus.innerText = ` Desconectado do RPC`;
             elStatus.style.background = "#fce8e6";
             elStatus.style.borderColor = "#d32f2f";
             elStatus.style.color = "#d32f2f";
