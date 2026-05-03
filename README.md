@@ -5,10 +5,17 @@
 We also added support for L1 to L3 deposits via the CLI.
 
 The easiest way to run a test of our SDK is using Docker.
-
+```bash
 git clone https://github.com/riquelima805/woosdk.git
+```
+
+```bash
 cd woosdk
+```
+
+```bash
 docker compose up --build
+```
 
 This will only run the RPC node with "fake" proofs, for testing purposes only.
 
