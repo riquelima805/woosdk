@@ -21,19 +21,21 @@ services:
       timeout: 5s
       retries: 10
  
-  
-  zk_prover:
+    zk_prover:
     build:
-      context: ./zk-prover-mock
+      context: ./zk-prover      
+      dockerfile: Dockerfile
     container_name: l3_zk_prover
     restart: unless-stopped
     ports:
       - "3030:3030"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3030/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      interval: 10s
+      timeout: 5s
+      retries: 20 
+ 
+  
  
   
   # Uso: docker compose run --rm cli node cli.mjs full -c 1988 -g 1
