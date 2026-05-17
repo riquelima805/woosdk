@@ -1,10 +1,13 @@
-
 import dotenv from 'dotenv';
 dotenv.config();
 import express, { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
-import { execSync, spawnSync } from 'child_process';
+import { execSync, spawnSync, execFile } from 'child_process';
+import { promisify } from 'util';
+
+
+const execFileAsync = promisify(execFile);
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -61,15 +64,15 @@ if (!PRIVATE_KEY || !L3_FOLDER_NAME || !MY_ID || !ZK_PROVER_URL) {
 
 const pgClient = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL?.includes('sslmode=disable') ? false : { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: false }, 
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
 });
 
 pgClient.on('error', (err) => {
-    console.error("  Erro em conexão idle (ignorado):", err.message);
-    
+    console.error(" [PG POOL] Erro em conexão idle (ignorado):", err.message);
+   
 });
 
 
@@ -95,10 +98,39 @@ pgClient.query(`
         timestamp BIGINT,
         transactions JSONB
     );
+    CREATE TABLE IF NOT EXISTS wal_log (
+        id SERIAL PRIMARY KEY,
+        tx_id VARCHAR(255) UNIQUE NOT NULL,
+        tx_data JSONB NOT NULL,
+        state_snapshot JSONB NOT NULL,
+        applied BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 `).then(() => {
     console.log("Conectado ao PostgreSQL!");
     console.log("Tabelas de Dados e Fila de Saques prontas.");
-}).catch(e => console.error(" Erro ao criar tabelas:", e));
+
+    pgClient.query(`SELECT * FROM wal_log WHERE applied = FALSE ORDER BY id ASC`)
+        .then(async (res) => {
+            if (res.rows.length === 0) return;
+            console.warn(`[WAL] Recuperando ${res.rows.length} TX(s) nao aplicadas apos crash...`);
+            for (const row of res.rows) {
+                try {
+                    const snap = row.state_snapshot;
+                    if (snap.balances)      Object.assign(L3_STATE.balances, snap.balances);
+                    if (snap.tokenBalances) Object.assign(L3_STATE.tokenBalances, snap.tokenBalances);
+                    if (snap.nonces)        Object.assign(L3_STATE.nonces, snap.nonces);
+                    await pgClient.query(`UPDATE wal_log SET applied = TRUE WHERE id = $1`, [row.id]);
+                    console.log(`[WAL] TX ${row.tx_id} reaplicada.`);
+                } catch (e: any) {
+                    console.error(`[WAL] Falha ao reaplicar TX ${row.tx_id}:`, e.message);
+                }
+            }
+            await saveStateToDB();
+            console.log(`[WAL] Recuperacao concluida.`);
+        })
+        .catch(e => console.error("[WAL] Erro na recuperacao:", e));
+}).catch(e => console.error("Erro ao criar tabelas:", e));
 
 
 const db = {
@@ -114,6 +146,24 @@ const db = {
         `, [key, JSON.stringify(value)]);
     }
 };
+
+
+async function walLog(txId: string, txData: any, stateSnapshot: {
+    balances?: Record<string, number>,
+    tokenBalances?: Record<string, Record<string, number>>,
+    nonces?: Record<string, number>
+}): Promise<void> {
+    await pgClient.query(
+        `INSERT INTO wal_log (tx_id, tx_data, state_snapshot, applied)
+         VALUES ($1, $2, $3, FALSE)
+         ON CONFLICT (tx_id) DO NOTHING`,
+        [txId, JSON.stringify(txData), JSON.stringify(stateSnapshot)]
+    );
+}
+
+async function walComplete(txId: string): Promise<void> {
+    await pgClient.query(`UPDATE wal_log SET applied = TRUE WHERE tx_id = $1`, [txId]);
+}
 
 const DEFAULT_SEQUENCER_ADDRESS = process.env.DEFAULT_SEQUENCER_ADDRESS!;
 const VAULT_ADDRESS = process.env.VAULT_ADDRESS || DEFAULT_SEQUENCER_ADDRESS;
@@ -184,7 +234,7 @@ async function loadStateFromDB() {
         L3_STATE.tokenBalances[WALEO_CONTRACT_ID] = {};
     }
 
-    console.log(`Estado carregado. Lote atual: #${currentBatchId}`);
+    console.log(`✅ Estado carregado. Lote atual: #${currentBatchId}`);
 }
 
 async function saveStateToDB() {
@@ -203,24 +253,25 @@ function generateStateRoot(): string {
 }
 
 
-function prepareSandbox(contractName: string, leoCode: string) {
+async function prepareSandbox(contractName: string, leoCode: string) {
     const cleanName = contractName.replace('.aleo', '').trim();
     const chainSandboxRoot = path.join(process.cwd(), 'sandbox', L3_FOLDER_NAME);
     const sandboxDir = path.join(chainSandboxRoot, cleanName);
     const srcDir = path.join(sandboxDir, 'src');
 
-    
+    // 1. Cria o projeto base se não existir
     if (!fs.existsSync(chainSandboxRoot)) fs.mkdirSync(chainSandboxRoot, { recursive: true });
     if (!fs.existsSync(sandboxDir)) {
         console.log(`[SANDBOX] Criando novo ambiente para: ${cleanName}`);
-        execSync(`leo new ${cleanName}`, { cwd: chainSandboxRoot });
+        // [FIX 1 - ASYNC] leo new pode demorar varios segundos; nao deve bloquear o event loop
+        await execFileAsync('leo', ['new', cleanName], { cwd: chainSandboxRoot });
     }
     if (!fs.existsSync(srcDir)) fs.mkdirSync(srcDir, { recursive: true });
 
-    
+    // 2. Escreve o código principal
     fs.writeFileSync(path.join(srcDir, 'main.leo'), leoCode);
 
-    
+    // 3. Verifica Imports no código
     const importRegex = /import\s+([a-zA-Z0-9_]+\.aleo);/g;
     let match;
     const dependencies: any = {};
@@ -228,12 +279,12 @@ function prepareSandbox(contractName: string, leoCode: string) {
 
     while ((match = importRegex.exec(leoCode)) !== null) {
         const importedContract = match[1];
-        console.log(`[DEPENDÊNCIA] Detectado import: ${importedContract}`);
+        console.log(`[DEPENDENCIA] Detectado import: ${importedContract}`);
         
         
         const depState = L3_STATE.contracts[importedContract];
         if (!depState || !depState.code) {
-            throw new Error(`Dependência '${importedContract}' não encontrada na rede L3. Faça o deploy dela primeiro!`);
+            throw new Error(`Dependencia '${importedContract}' nao encontrada na rede L3. Faca o deploy dela primeiro!`);
         }
 
         const depCleanName = importedContract.replace('.aleo', '');
@@ -467,7 +518,7 @@ app.post('/', async (req: Request, res: Response) => {
         const pools = dexContract?.storage?.pools || {};
         const registry = dexContract?.storage?.token_registry || {};
 
-        
+        // 1. MAPEAMENTO REVERSO MÁGICO
         const reverseMap: Record<string, string> = {};
         for (const tokenName of Object.keys(L3_STATE.tokenBalances)) {
             try {
@@ -575,7 +626,7 @@ app.post('/', async (req: Request, res: Response) => {
 
         let portfolio: Record<string, number> = {};
 
-        
+        // Pega os tokens normais (ex: wanpedleo.aleo)
         for (const tokenId in L3_STATE.tokenBalances) {
             const balance = L3_STATE.tokenBalances[tokenId][userAddress];
             if (balance && balance > 0) {
@@ -583,10 +634,10 @@ app.post('/', async (req: Request, res: Response) => {
             }
         }
 
-        
+        // Pega o saldo de Gás e usa o nome do .env
         const gasBalance = L3_STATE.balances[userAddress];
         if (gasBalance && gasBalance > 0) {
-            portfolio[GAS_TOKEN_NAME] = gasBalance; 
+            portfolio[GAS_TOKEN_NAME] = gasBalance; // <--- MUDANÇA AQUI
         }
 
         return res.json({ jsonrpc: "2.0", id, result: portfolio });
@@ -706,7 +757,7 @@ app.post('/', async (req: Request, res: Response) => {
 
     
     if (mappingName === 'lp_shares_simple') {
-    const pairKey = key;   
+    const pairKey = key;       
     const userAddr = params[3]; 
     const simpleKey = `${pairKey}:${userAddr}`;
     const storage = L3_STATE.contracts['woo_dex.aleo']?.storage?.lp_shares || {};
@@ -735,7 +786,7 @@ app.post('/', async (req: Request, res: Response) => {
 }
 
    
-   
+  
     if (method === 'woo_getDexBalances') {
         const userAddress = params[0];
         if (!userAddress) return res.json({ jsonrpc: "2.0", id, error: "Endereço não fornecido" });
@@ -870,7 +921,8 @@ if (method === 'woo_sendTransaction') {
             
             if (!fs.existsSync(sandboxDir)) {
                 console.log(` Criando sandbox isolado para token: ${cleanName} na rede ${L3_FOLDER_NAME}`);
-                execSync(`leo new ${cleanName}`, { cwd: chainSandboxRoot });
+                // [FIX 1 - ASYNC] leo new nao bloqueia o event loop
+                await execFileAsync('leo', ['new', cleanName], { cwd: chainSandboxRoot });
             }
             if (!fs.existsSync(srcDir)) fs.mkdirSync(srcDir, { recursive: true });
             
@@ -879,10 +931,24 @@ if (method === 'woo_sendTransaction') {
             
             if (!fs.existsSync(aleoFilePath)) {
                 console.log(`Compilando token no sandbox da rede ${L3_FOLDER_NAME}...`);
-                execSync(`leo build`, { cwd: sandboxDir, stdio: 'pipe' });
+                // [FIX 1 - ASYNC] leo build sem bloquear o servidor
+                await execFileAsync('leo', ['build'], { cwd: sandboxDir });
             }
 
-            console.log(` Solicitando prova de TRANSFERÊNCIA para ${tokenId} via Worker Rust...`);
+            console.log(` Solicitando prova de TRANSFERENCIA para ${tokenId} via Worker Rust...`);
+
+            const txId = `0x${crypto.randomBytes(16).toString('hex')}`;
+            // [FIX 2 - WAL] Grava intencao antes de mutar balances
+            await walLog(txId, { type: "TOKEN_TRANSFER", from, to, tokenId, numericAmount, nonce }, {
+                tokenBalances: {
+                    [tokenId]: {
+                        [from]: currentBalance - numericAmount,
+                        [to]: (L3_STATE.tokenBalances[tokenId][to] || 0) + numericAmount
+                    }
+                },
+                nonces: { [from]: (L3_STATE.nonces[from] || 0) + 1 }
+            });
+
             const response = await fetch(`${ZK_PROVER_URL}/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -907,10 +973,10 @@ if (method === 'woo_sendTransaction') {
 
             L3_STATE.nonces[from] = (L3_STATE.nonces[from] || 0) + 1;
             await saveStateToDB();
+            await walComplete(txId);
             updateNonces(L3_STATE.nonces);
 
             
-            const txId = `0x${crypto.randomBytes(16).toString('hex')}`;
             const newTx = {
                 txId,
                 type: "TOKEN_TRANSFER",
@@ -926,12 +992,12 @@ if (method === 'woo_sendTransaction') {
             mempool.push(newTx);
             broadcast({ type: "TX", tx: newTx });
 
-            console.log(` [TRANSFERÊNCIA ] ${numericAmount} de ${from.substring(0,8)} para ${to.substring(0,8)} no token '${tokenId}'`);
+            console.log(` [TRANSFERENCIA] ${numericAmount} de ${from.substring(0,8)} para ${to.substring(0,8)} no token '${tokenId}'`);
             return res.json({ jsonrpc: "2.0", id, result: { txId } });
 
         } catch (error: any) {
             console.error(`Erro no Worker Rust HTTP (Transfer):`, error.message);
-            return res.json({ jsonrpc: "2.0", id, error: "Falha na geração da ZK Proof da Transferência" });
+            return res.json({ jsonrpc: "2.0", id, error: "Falha na geracao da ZK Proof da Transferencia" });
         }
     }
 
@@ -972,7 +1038,172 @@ if (method === 'woo_sendTransaction') {
         return res.json({ jsonrpc: "2.0", id, result: `Token ${tokenId} criado com sucesso` });
     }
 
-    
+
+    if (method === 'woo_executeContract') {
+        
+        const { from, contractName, functionName, inputs, signature, nonce, proof, state_changes } = params[0];
+
+        if (!signature || nonce === undefined) {
+            return res.json({ jsonrpc: "2.0", id, error: "Assinatura e nonce são obrigatórios." });
+        }
+        if (!L3_STATE.contracts[contractName]) {
+            return res.json({ jsonrpc: "2.0", id, error: "Contrato não encontrado" });
+        }
+        
+        
+        if (!proof || proof === "NO_PROOF") {
+            return res.json({ jsonrpc: "2.0", id, error: "Prova ZK obrigatória. O cliente não gerou a prova." });
+        }
+
+        try {
+            const senderAddress = Address.from_string(from);
+            const aleoSignature = Signature.from_string(signature);
+            const message = new TextEncoder().encode(`${from}:${contractName}:${functionName}:EXECUTE:${nonce}`);
+            if (!aleoSignature.verify(senderAddress, message)) throw new Error("Assinatura invalida.");
+            const expectedNonce = L3_STATE.nonces[from] || 0;
+            if (nonce !== expectedNonce) return res.json({ jsonrpc: "2.0", id, error: `Nonce invalido. Esperado: ${expectedNonce}` });
+        } catch (err) {
+            console.warn(` [SEGURANCA] Tentativa de execucao invalida de ${from}`);
+            return res.json({ jsonrpc: "2.0", id, error: "Assinatura ou Nonce invalidos!" });
+        }
+
+       
+        if (!from || !/^aleo1[a-z0-9]{58}$/.test(from)) {
+            return res.json({ jsonrpc: "2.0", id, error: "Endereco 'from' invalido." });
+        }
+
+        const cleanName = contractName.replace('.aleo', '').trim();
+
+        if (contractName === 'woo_dex.aleo' && functionName === 'deposit') {
+            const tokenContractName = inputs[2]; 
+            const guard = guardDeposit(L3_STATE, from, inputs, tokenContractName);
+            if (!guard.ok) return res.json({ jsonrpc: "2.0", id, error: guard.error });
+        }
+
+        try {
+            const { sandboxDir, aleoFilePath } = prepareSandbox(contractName, L3_STATE.contracts[contractName].code);
+
+            if (!fs.existsSync(aleoFilePath)) {
+                console.log(`[COMPILADOR] Compilando contrato e dependencias na rede ${L3_FOLDER_NAME}...`);
+                // [FIX 1 - ASYNC] leo build sem bloquear o event loop
+                await execFileAsync('leo', ['build'], { cwd: sandboxDir });
+            }
+
+            const gasBalance = L3_STATE.balances[from] ?? 0;
+            if (gasBalance < EXECUTION_FEE) {
+                return res.json({ jsonrpc: "2.0", id, error: "Gas insuficiente" });
+            }
+
+            
+            console.log(`[ZK-HTTP] Verificando prova enviada pelo usuario via Browser...`);
+            
+            
+            const safeAleoFilePath = aleoFilePath.replace(/\\/g, '/');
+
+            const verifyResp = await fetch(`${ZK_PROVER_URL}/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    aleo_file_path: safeAleoFilePath, 
+                    function_name: functionName,
+                    proof: proof,  
+                    inputs: inputs,
+                })
+            });
+            
+            
+            if (!verifyResp.ok) {
+                const errText = await verifyResp.text();
+                throw new Error(`Worker Rust recusou a verificacao: ${errText}`);
+            }
+
+            const verifyData = await verifyResp.json() as any;
+            if (!verifyData.valid) throw new Error("A prova gerada pelo Browser e matematicamente invalida!");
+
+            
+            if (contractName === 'woo_dex.aleo' && functionName === 'withdraw') {
+                const tokenContractName = inputs[2];
+                const guard = guardWithdraw(L3_STATE, from, inputs, tokenContractName);
+                if (!guard.ok) console.error(`[CRÍTICO] ZK aprovou withdraw, mas RPC falhou: ${guard.error}`);
+            }
+
+            
+            let safeStateChanges = state_changes || [];
+
+            if (functionName === 'transfer_public') {
+                const receiver = inputs[0]; 
+                
+                const amountStr = inputs[1].replace(/u(8|16|32|64|128)/g, '').replace('.public', '').replace('.private', '').trim();
+                const safeAmount = Number(amountStr);
+
+                console.log(`[SEGURANÇA] Interceptando transferência nativa: ${safeAmount} tokens.`);
+
+                
+                const tokenContract = contractName;
+                const senderBalance = L3_STATE.tokenBalances[tokenContract]?.[from] || 0;
+                
+                if (senderBalance < safeAmount) {
+                    return res.json({ jsonrpc: "2.0", id, error: "Saldo insuficiente no banco de dados da L3!" });
+                }
+
+                
+                safeStateChanges = [{
+                    kind: 'transfer',
+                    contract: tokenContract,
+                    sender: from,
+                    receiver: receiver,
+                    amount: safeAmount
+                }];
+            }
+
+            
+            let executionResults = {}; 
+            if (safeStateChanges && Array.isArray(safeStateChanges)) {
+                
+                executionResults = await applyStateChanges(contractName, from, safeStateChanges, inputs);
+                await saveStateToDB();
+            }
+            
+
+            L3_STATE.balances[from] = (L3_STATE.balances[from] || 0) - EXECUTION_FEE;
+            L3_STATE.nonces[from] = (L3_STATE.nonces[from] || 0) + 1;
+            await saveStateToDB();
+            updateNonces(L3_STATE.nonces);
+
+
+            const txId = `0x${crypto.randomBytes(16).toString('hex')}`;
+            const newTx = {
+                txId,
+                type: "EXECUTE",
+                contract: contractName,
+                function: functionName,
+                inputs: inputs,
+                nonce,
+                signature,
+                proof: proof, 
+                timestamp: Date.now()
+            };
+            
+            mempool.push(newTx);
+            broadcast({ type: "TX", tx: newTx });
+            
+            console.log(` [ZK-HTTP] Execução concluída. Nonce atualizado para ${L3_STATE.nonces[from]}`);
+            
+            return res.json({ 
+                jsonrpc: "2.0", 
+                id, 
+                result: {
+                    proof: proof,
+                    execution_results: executionResults 
+                } 
+            });
+            
+        } catch (error: any) {
+            console.error(` Erro na Verificação do Worker HTTP:`, error.message);
+            return res.json({ jsonrpc: "2.0", id, error: `Falha ao verificar a Prova ZK: ${error.message}` });
+        }
+    }
+
     if (method === 'woo_deployContract') {
         const { from, contractName, leoCode, signature, nonce } = params[0];
 
@@ -992,7 +1223,6 @@ if (method === 'woo_sendTransaction') {
             return res.json({ jsonrpc: "2.0", id, error: "Assinatura criptográfica inválida!" });
         }
 
-        
         const cleanName = contractName.replace('.aleo', '').trim();
         if (!/^[a-z][a-z0-9_]{0,63}$/.test(cleanName)) {
             return res.json({ jsonrpc: "2.0", id, error: "Nome de contrato inválido." });
@@ -1002,19 +1232,43 @@ if (method === 'woo_sendTransaction') {
             return res.json({ jsonrpc: "2.0", id, error: "Contrato já existe" });
         }
 
-        
         const senderBalance = L3_STATE.balances[from] ?? 0;
         if (senderBalance < DEPLOY_FEE) {
             return res.json({ jsonrpc: "2.0", id, error: "Gás insuficiente" });
         }
 
+        const txId = `0x${crypto.randomBytes(16).toString('hex')}`;
+
+        
+        await walLog(txId, { type: "DEPLOY", from, contractName, nonce }, {
+            balances: { [from]: (L3_STATE.balances[from] || 0) - DEPLOY_FEE },
+            nonces:   { [from]: (L3_STATE.nonces[from] || 0) + 1 }
+        });
+
         L3_STATE.balances[from] -= DEPLOY_FEE;
         L3_STATE.contracts[contractName] = { owner: from, code: leoCode };
-        await saveStateToDB(); 
+        await saveStateToDB();
+        
+        const { sandboxDir, aleoFilePath } = prepareSandbox(contractName, leoCode);
+        if (!fs.existsSync(aleoFilePath)) {
+            console.log(`[COMPILADOR] Compilando contrato ${contractName} (async)...`);
+        
+            try {
+                await execFileAsync('leo', ['build'], { cwd: sandboxDir });
+            } catch (buildErr: any) {
+                console.error(`[COMPILADOR] leo build falhou para ${contractName}:`, buildErr.stderr || buildErr.message);
+                
+                delete L3_STATE.contracts[contractName];
+                L3_STATE.balances[from] = (L3_STATE.balances[from] || 0) + DEPLOY_FEE;
+                await saveStateToDB();
+                return res.json({ jsonrpc: "2.0", id, error: `Erro de compilacao Leo: ${(buildErr.stderr || buildErr.message).substring(0, 200)}` });
+            }
+        }
+
         L3_STATE.nonces[from] = (L3_STATE.nonces[from] || 0) + 1;
         updateNonces(L3_STATE.nonces);
+        await walComplete(txId);
 
-        const txId = `0x${crypto.randomBytes(16).toString('hex')}`;
         const newTx = {
             txId,
             type: "DEPLOY",
@@ -1030,162 +1284,7 @@ if (method === 'woo_sendTransaction') {
         return res.json({ jsonrpc: "2.0", id, result: txId });
     }
 
-    
-    if (method === 'woo_executeContract') {
-        const { from, contractName, functionName, inputs, signature, nonce } = params[0];
 
-        if (!signature || nonce === undefined) {
-            return res.json({ jsonrpc: "2.0", id, error: "Assinatura e nonce são obrigatórios." });
-        }
-        if (!L3_STATE.contracts[contractName]) {
-            return res.json({ jsonrpc: "2.0", id, error: "Contrato não encontrado" });
-        }
-
-        try {
-            const senderAddress = Address.from_string(from);
-            const aleoSignature = Signature.from_string(signature);
-            const message = new TextEncoder().encode(`${from}:${contractName}:${functionName}:EXECUTE:${nonce}`);
-            if (!aleoSignature.verify(senderAddress, message)) throw new Error("Assinatura inválida.");
-            const expectedNonce = L3_STATE.nonces[from] || 0;
-            if (nonce !== expectedNonce) return res.json({ jsonrpc: "2.0", id, error: `Nonce inválido. Esperado: ${expectedNonce}` });
-        } catch (err) {
-            console.warn(` [SEGURANÇA] Tentativa de execução inválida de ${from}`);
-            return res.json({ jsonrpc: "2.0", id, error: "Assinatura ou Nonce inválidos!" });
-        }
-
-        
-
-        const cleanName = contractName.replace('.aleo', '').trim();
-
-
-        
-        
-        const chainSandboxRoot = path.join(process.cwd(), 'sandbox', L3_FOLDER_NAME);
-        const sandboxDir = path.join(chainSandboxRoot, cleanName);
-        const srcDir = path.join(sandboxDir, 'src');
-        const aleoFilePath = path.join(sandboxDir, 'build', 'main.aleo');
-
-if (contractName === 'woo_dex.aleo' && functionName === 'deposit') {
-    const tokenContractName = inputs[2]; 
-    const guard = guardDeposit(L3_STATE, from, inputs, tokenContractName);
-    
-    if (!guard.ok) {
-        return res.json({ jsonrpc: "2.0", id, error: guard.error });
-    }
-    
-}
-
-
-        try {
-    
-    const { sandboxDir, aleoFilePath } = prepareSandbox(contractName, L3_STATE.contracts[contractName].code);
-
-    if (!fs.existsSync(aleoFilePath)) {
-        console.log(`[COMPILADOR] Compilando contrato e dependências na rede ${L3_FOLDER_NAME}...`);
-        execSync(`leo build`, { cwd: sandboxDir, stdio: 'pipe' });
-
-    }
-
-    const finalInputsForRust = (contractName === 'woo_dex.aleo' && (functionName === 'deposit' || functionName === 'withdraw'))
-    ? inputs.slice(0, 2) 
-    : inputs;
-
-    console.log(`[ZK-HTTP] Solicitando prova para ${functionName} via Worker Rust...`);
-
-            const gasBalance = L3_STATE.balances[from] ?? 0;
-            if (gasBalance < EXECUTION_FEE) {
-                return res.json({ jsonrpc: "2.0", id, error: "Gás insuficiente" });
-            }
-
-
-            const response = await fetch(`${ZK_PROVER_URL}/execute`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        aleo_file_path: aleoFilePath,
-        function_name: functionName,
-        private_key: PRIVATE_KEY,
-        inputs: finalInputsForRust, 
-    })
-});
-            if (!response.ok) {
-                const errorDetail = await response.text();
-                throw new Error(`Worker Rust retornou erro (${response.status}): ${errorDetail}`);
-            }
-            const parsed = await response.json();
-
-            
-            const verifyResp = await fetch(`${ZK_PROVER_URL}/verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    aleo_file_path: aleoFilePath,
-                    function_name: functionName,
-                    proof: parsed.proof,
-                    inputs: inputs,
-                })
-            });
-            const verifyData = await verifyResp.json() as any;
-            if (!verifyData.valid) throw new Error("A prova gerada pelo Worker é  inválida!");
-
-            
-if (contractName === 'woo_dex.aleo' && functionName === 'withdraw') {
-    const tokenContractName = inputs[2];
-    const guard = guardWithdraw(L3_STATE, from, inputs, tokenContractName);
-    if (!guard.ok) {
-        console.error(` ZK aprovou withdraw, mas RPC falhou: ${guard.error}`);
-    }
-}
-
-            
-            let executionResults = {}; 
-            if (parsed.state_changes && Array.isArray(parsed.state_changes)) {
-                
-                executionResults = await applyStateChanges(contractName, from, parsed.state_changes, inputs);
-                await saveStateToDB();
-            }
-
-            
-
-            
-
-            
-            L3_STATE.balances[from] = (L3_STATE.balances[from] || 0) - EXECUTION_FEE;
-            L3_STATE.nonces[from] = (L3_STATE.nonces[from] || 0) + 1;
-            await saveStateToDB();
-            updateNonces(L3_STATE.nonces);
-
-            
-            parsed.execution_results = executionResults;
-
-            const txId = `0x${crypto.randomBytes(16).toString('hex')}`;
-            const newTx = {
-                txId,
-                type: "EXECUTE",
-                contract: contractName,
-                function: functionName,
-                inputs: inputs,
-                nonce,
-                signature,
-                proof: parsed.proof,
-                timestamp: Date.now()
-            };
-            mempool.push(newTx);
-            broadcast({ type: "TX", tx: newTx });
-            
-            console.log(` [ZK-HTTP] Execução concluída. Nonce atualizado para ${L3_STATE.nonces[from]}`);
-            
-            
-            return res.json({ jsonrpc: "2.0", id, result: parsed });
-            
-        } catch (error: any) {
-            console.error(` Erro no Worker HTTP:`, error.message);
-            return res.json({ jsonrpc: "2.0", id, error: "Falha na geração da Prova ZK" });
-        }
-    }
-
-    
-    
     if (method === 'woo_requestWithdraw') {
         const { address, amount, signature, nonce } = params[0];
         const fee = 15000; 
@@ -1250,7 +1349,7 @@ app.get('/batch/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ error: "ID de lote inválido" });
         }
 
-        
+       
         const proofsJson = await db.get(`batch_proofs:${batchId}`).catch(() => null);
         
         if (!proofsJson) {
@@ -1450,7 +1549,7 @@ setInterval(async () => {
     const leader = getLeader(currentBatchId);
     if (leader !== MY_ID) {
         console.log(`\n [RODADA #${currentBatchId}] Líder: '${leader}'. Aguardando...`);
-        isProcessingBatch = false; 
+        isProcessingBatch = false;
         return;
     }
 
@@ -1466,21 +1565,30 @@ setInterval(async () => {
         for (const tx of mempool) {
             if (tx.proof && tx.proof !== "NO_PROOF") {
                 try {
+                   
+                    const rawPath = path.join(process.cwd(), 'sandbox', L3_FOLDER_NAME, tx.contract?.replace('.aleo','') || '', 'build', 'main.aleo');
+                    const safePath = rawPath.replace(/\\/g, '/');
+
                     const verifyRes = await fetch(`${ZK_PROVER_URL}/verify`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            aleo_file_path: path.join(process.cwd(), 'sandbox', L3_FOLDER_NAME, tx.contract?.replace('.aleo','') || '', 'build', 'main.aleo'),
+                            aleo_file_path: safePath,
                             function_name: tx.function || 'somar',
                             proof: tx.proof,
                             inputs: tx.inputs || []
                         })
                     });
+                    
+                    if (!verifyRes.ok) throw new Error("Falha na comunicação com o Rust");
+                    
                     const verifyData = await verifyRes.json() as any;
-                    if (!verifyData.valid) throw new Error(`Prova inválida para TX: ${tx.txId}`);
+                    if (!verifyData.valid) throw new Error(`Prova matemática inválida na TX: ${tx.txId}`);
                 } catch (err: any) {
-                    console.error(` [SEQUENCER] Fraude detectada. Limpando mempool.`);
+                    console.error(` [SEQUENCER] Fraude (ou erro de leitura) detectada. Limpando mempool. Erro: ${err.message}`);
                     mempool = [];
+                    
+                    isProcessingBatch = false; 
                     return;
                 }
             }
@@ -1491,15 +1599,23 @@ setInterval(async () => {
 
     try {
         console.log(` [SEQUENCER] Enviando Lote #${currentBatchId} para a L1...`);
-        safeExec(`leo build`, projectDir);
+    
+        await execFileAsync('leo', ['build'], { cwd: projectDir });
 
         const cleanRecord = currentNetworkStateRecord.replace(/\s+/g, '');
-        const command = `leo execute -y commit_rollup "${cleanRecord}" ${currentBatchId}u64 ${realStateRoot} ${txsHash} --broadcast --network ${NETWORK} --endpoint ${ENDPOINT}`;
+        
+       
+        const chainId = `${process.env.DEFAULT_CHAIN_ID || '1988'}u64`;
+        
+       
+        const leoArgs = [
+            'execute', '-y', 'commit_rollup',
+            cleanRecord, chainId, `${currentBatchId}u64`, realStateRoot, txsHash,
+            '--broadcast', '--network', NETWORK, '--endpoint', ENDPOINT
+        ];
 
-        const cliOutput = execSync(command, { 
+        const { stdout: cliOutput } = await execFileAsync('leo', leoArgs, { 
             cwd: projectDir, 
-            encoding: 'utf-8', 
-            shell: false, 
             env: { ...process.env, PRIVATE_KEY: PRIVATE_KEY } 
         });
 
@@ -1577,13 +1693,13 @@ setInterval(async () => {
         `);
 
         if (pendingWithdraws.rows.length > 0) {
-            console.log(`\n Encontrou ${pendingWithdraws.rows.length} saques na fila. Iniciando envios...`);
+            console.log(`\n [DISPATCHER] Encontrou ${pendingWithdraws.rows.length} saques na fila. Iniciando envios...`);
         }
 
         const projectDir = path.join(process.cwd(), 'templates', L3_FOLDER_NAME);
 
         for (const tx of pendingWithdraws.rows) {
-            console.log(`  Processando saque ID ${tx.id} para ${tx.address.substring(0,8)}...`);
+            console.log(`   Processando saque ID ${tx.id} para ${tx.address.substring(0,8)}...`);
             
             try {
                 
@@ -1593,12 +1709,14 @@ setInterval(async () => {
                 const feeU64 = `${tx.fee}u64`;
                 const userAddress = tx.address;
 
-                const command = `leo execute -y bridge_out ${chainId} ${tokenId} ${amountU64} ${feeU64} ${userAddress} --broadcast --network ${NETWORK} --endpoint ${ENDPOINT}`;
                 
-                const cliOutput = execSync(command, { 
+                const leoArgs = [
+                    'execute', '-y', 'bridge_out',
+                    chainId, tokenId, amountU64, feeU64, userAddress,
+                    '--broadcast', '--network', NETWORK, '--endpoint', ENDPOINT
+                ];
+                const { stdout: cliOutput } = await execFileAsync('leo', leoArgs, { 
                     cwd: projectDir, 
-                    encoding: 'utf-8', 
-                    shell: false, 
                     env: { ...process.env, PRIVATE_KEY: PRIVATE_KEY } 
                 });
                 
@@ -1611,7 +1729,7 @@ setInterval(async () => {
                     "UPDATE withdrawals SET status = 'COMPLETED', l1_tx_id = $1 WHERE id = $2",
                     [aleoTxId, tx.id]
                 );
-                console.log(`    Saque ID ${tx.id} CONCLUÍDO! L1 TxID: ${aleoTxId}`);
+                console.log(`    Saque ID ${tx.id} CONCLUIDO! L1 TxID: ${aleoTxId}`);
 
             } catch (e: any) {
                 const erroOutput = e.stderr ? e.stderr.toString() : e.message;
