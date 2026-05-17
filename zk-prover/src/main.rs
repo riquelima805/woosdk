@@ -357,6 +357,10 @@ async fn verify_handler(
     (StatusCode::OK, Json(VerifyResponse { valid: is_valid })).into_response()
 }
 
+async fn health_handler() -> impl IntoResponse {
+    (StatusCode::OK, Json(serde_json::json!({ "status": "ok", "mode": "real" })))
+}
+
 async fn hash_bhp256_handler(
     Json(req): Json<HashRequest>,
 ) -> impl IntoResponse {
