@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/zk-prover .
+COPY --from=builder /app/target/release/zk_prover .
 
 EXPOSE 3030
 
