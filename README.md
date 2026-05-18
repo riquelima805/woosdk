@@ -26,8 +26,9 @@ docker compose --profile cli run --rm cli node cli.mjs full --chain-id 1988 --ga
 Replace 1988 with your network ID and remember to update the sequencer address in .env.test
 
 To make a deposit from L1 to L3 via the CLI:
-
+```bash
 docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1988 --token-id 0 --amount 1000 --receiver aleo1YOUR_ADDRESS_HERE
+```
 
 new L1 bridge depoit: 
 
