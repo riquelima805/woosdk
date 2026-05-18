@@ -109,30 +109,7 @@ pgClient.query(`
 `).then(() => {
     console.log("Conectado ao PostgreSQL!");
     console.log("Tabelas de Dados e Fila de Saques prontas.");
-
-    pgClient.query(`SELECT * FROM wal_log WHERE applied = FALSE ORDER BY id ASC`)
-        .then(async (res) => {
-            if (res.rows.length === 0) return;
-            console.warn(`[WAL] Recuperando ${res.rows.length} TX(s) nao aplicadas apos crash...`);
-            for (const row of res.rows) {
-                try {
-                    const snap = row.state_snapshot;
-                    if (snap.balances)      Object.assign(L3_STATE.balances, snap.balances);
-                    if (snap.tokenBalances) Object.assign(L3_STATE.tokenBalances, snap.tokenBalances);
-                    if (snap.nonces)        Object.assign(L3_STATE.nonces, snap.nonces);
-                    await pgClient.query(`UPDATE wal_log SET applied = TRUE WHERE id = $1`, [row.id]);
-                    console.log(`[WAL] TX ${row.tx_id} reaplicada.`);
-                } catch (e: any) {
-                    console.error(`[WAL] Falha ao reaplicar TX ${row.tx_id}:`, e.message);
-                }
-            }
-            await saveStateToDB();
-            console.log(`[WAL] Recuperacao concluida.`);
-        })
-        .catch(e => console.error("[WAL] Erro na recuperacao:", e));
-}).catch(e => console.error("Erro ao criar tabelas:", e));
-
-
+    
 const db = {
     get: async (key: string) => {
         const res = await pgClient.query('SELECT value FROM kv_store WHERE key = $1', [key]);
@@ -1765,10 +1742,79 @@ setInterval(async () => {
     }
 }, 5 * 60 * 1000); 
 
-loadStateFromDB().then(() => {
-    app.listen(HTTP_PORT, () => {
-        console.log(`\n WOO  NODE (ID: ${MY_ID}) rodando na porta ${HTTP_PORT}`);
-        startP2P(P2P_PORT);
-        startL1Indexer();
-    });
-});
+async function startNode() {
+    try {
+        console.log("⏳ Conectando e verificando tabelas do banco de dados...");
+        
+        // 1. Cria as tabelas PRIMEIRO e espera (await) terminar
+        await pgClient.query(`
+            CREATE TABLE IF NOT EXISTS kv_store (
+                key VARCHAR(255) PRIMARY KEY,
+                value JSONB
+            );
+            CREATE TABLE IF NOT EXISTS withdrawals (
+                id SERIAL PRIMARY KEY,
+                address VARCHAR(255),
+                amount BIGINT,
+                fee BIGINT,
+                status VARCHAR(50),
+                l1_tx_id VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS batch_history (
+                batch_id BIGINT PRIMARY KEY,
+                state_root VARCHAR(255),
+                txs_hash VARCHAR(255),
+                tx_count INT,
+                timestamp BIGINT,
+                transactions JSONB
+            );
+            CREATE TABLE IF NOT EXISTS wal_log (
+                id SERIAL PRIMARY KEY,
+                tx_id VARCHAR(255) UNIQUE NOT NULL,
+                tx_data JSONB NOT NULL,
+                state_snapshot JSONB NOT NULL,
+                applied BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log(" Tabelas de Dados e Fila de Saques prontas.");
+
+        // 2. Recupera o WAL (se o servidor tiver crashado antes)
+        const res = await pgClient.query(`SELECT * FROM wal_log WHERE applied = FALSE ORDER BY id ASC`);
+        if (res.rows.length > 0) {
+            console.warn(`[WAL] Recuperando ${res.rows.length} TX(s) nao aplicadas apos crash...`);
+            for (const row of res.rows) {
+                try {
+                    const snap = row.state_snapshot;
+                    if (snap.balances)      Object.assign(L3_STATE.balances, snap.balances);
+                    if (snap.tokenBalances) Object.assign(L3_STATE.tokenBalances, snap.tokenBalances);
+                    if (snap.nonces)        Object.assign(L3_STATE.nonces, snap.nonces);
+                    await pgClient.query(`UPDATE wal_log SET applied = TRUE WHERE id = $1`, [row.id]);
+                    console.log(`[WAL] TX ${row.tx_id} reaplicada.`);
+                } catch (e) {
+                    console.error(`[WAL] Falha ao reaplicar TX ${row.tx_id}:`, e.message);
+                }
+            }
+            await saveStateToDB();
+            console.log(`[WAL] Recuperacao concluida.`);
+        }
+
+        // 3. AGORA SIM, com as tabelas prontas, carrega o estado
+        await loadStateFromDB();
+
+        // 4. Só inicia o RPC e o P2P depois que tudo estiver perfeito na memória
+        app.listen(HTTP_PORT, () => {
+            console.log(`\n WOO NODE (ID: ${MY_ID}) rodando na porta ${HTTP_PORT}`);
+            startP2P(P2P_PORT);
+            startL1Indexer();
+        });
+
+    } catch (e) {
+        console.error("Erro fatal ao iniciar o nó:", e);
+        process.exit(1); // Derruba o container se o banco falhar, para o Docker tentar reiniciar
+    }
+}
+
+// Executa a inicialização
+startNode();
