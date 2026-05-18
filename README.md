@@ -51,6 +51,19 @@ check
 docker compose ps
 ```
 
+⚠️⚠️⚠️ error: If you encounter a hyphen error, run this command in the terminal.
+
+```bash
+sed -i 's|CMD \["./zk-prover"\]|CMD ["./zk_prover"]|g' ~/woosdk/zk-prover/Dockerfile
+```
+
+and then force the image build.
+```bash
+docker compose build zk_prover --no-cache && docker compose up -d --force-recreate
+```
+
+
+
 ⚠️ You will always need to deploy the DeFi contract and wanpedleo for the wallet to work properly. Both are located in the /aleo programs.
 
 
