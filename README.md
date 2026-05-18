@@ -17,8 +17,6 @@ cd woosdk
 docker compose up --build
 ```
 
-This will only run the RPC node with "fake" proofs, for testing purposes only.
-
 To create a new network via Docker:
 
 ```bash
