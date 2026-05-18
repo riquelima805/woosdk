@@ -401,6 +401,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/execute", axum::routing::post(execute_handler))
+        .route("/health", axum::routing::get(health_handler))
         .route("/verify", axum::routing::post(verify_handler))
         .route("/hash/bhp256", axum::routing::post(hash_bhp256_handler)) 
         .layer(tower_http::cors::CorsLayer::permissive())
