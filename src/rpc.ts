@@ -72,44 +72,8 @@ const pgClient = new Pool({
 
 pgClient.on('error', (err) => {
     console.error(" [PG POOL] Erro em conexão idle (ignorado):", err.message);
-   
 });
 
-
-pgClient.query(`
-    CREATE TABLE IF NOT EXISTS kv_store (
-        key VARCHAR(255) PRIMARY KEY,
-        value JSONB
-    );
-    CREATE TABLE IF NOT EXISTS withdrawals (
-        id SERIAL PRIMARY KEY,
-        address VARCHAR(255),
-        amount BIGINT,
-        fee BIGINT,
-        status VARCHAR(50),
-        l1_tx_id VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS batch_history (
-        batch_id BIGINT PRIMARY KEY,
-        state_root VARCHAR(255),
-        txs_hash VARCHAR(255),
-        tx_count INT,
-        timestamp BIGINT,
-        transactions JSONB
-    );
-    CREATE TABLE IF NOT EXISTS wal_log (
-        id SERIAL PRIMARY KEY,
-        tx_id VARCHAR(255) UNIQUE NOT NULL,
-        tx_data JSONB NOT NULL,
-        state_snapshot JSONB NOT NULL,
-        applied BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-`).then(() => {
-    console.log("Conectado ao PostgreSQL!");
-    console.log("Tabelas de Dados e Fila de Saques prontas.");
-    
 const db = {
     get: async (key: string) => {
         const res = await pgClient.query('SELECT value FROM kv_store WHERE key = $1', [key]);
