@@ -572,6 +572,30 @@ program ${programName} {
         return { status: 'success', programName, txId };
     }
 
+     async mintGas(chainId, amount, receiver) {
+        const projectDir = path.join(__dirname, 'templates', `woo_genesis_${chainId}`);
+        
+        if (!fs.existsSync(projectDir)) {
+            console.error(`\n Pasta do projeto '${projectDir}' não encontrada. Rode o deploy completo primeiro.`);
+            return false;
+        }
+
+        const baseCmd = `"${LEO_CMD}" execute -y --broadcast --network ${process.env.NETWORK || 'testnet'} --endpoint ${process.env.ENDPOINT || 'https://api.explorer.provable.com/v1'} --consensus-version ${process.env.CONSENSUS_VERSION || 9} --private-key ${this.privateKey}`;
+        
+        try {
+            console.log(`\n🪙 Mintando ${amount} de gas para ${receiver} na chain ${chainId}...`);
+            const cmd = `${baseCmd} mint_gas ${chainId}u64 ${amount}u64 ${receiver}`;
+            
+            execSync(cmd, { cwd: projectDir, encoding: 'utf-8', stdio: 'inherit', shell: SHELL_OPT });
+            
+            console.log("\n Gás mintado com sucesso na mempool!");
+            return true;
+        } catch (err) {
+            console.error("\n ERRO AO MINTAR GAS:", err.message);
+            return false;
+        }
+    }
+
     async initializeL3(chainId, gasTokenId, sequencerAddress, initialSupply = 1000000, vaultAddress) {
         const projectDir = path.join(__dirname, 'templates', `woo_genesis_${chainId}`);
         
@@ -731,9 +755,34 @@ program.command('full')
             );
             
         } catch (err) {
-            console.error("🔥 Erro fatal:", err.message);
+            console.error(" Erro fatal:", err.message);
         } finally {
         
+            process.exit(0);
+        }
+    });
+
+program.command('mint-gas')
+    .description('Minta novos tokens de gas na L3')
+    .requiredOption('-a, --amount <number>', 'Quantidade de gas a ser mintada')
+    .requiredOption('-r, --receiver <address>', 'Endereço Aleo que vai receber o gas')
+    .option('-c, --chain-id <number>', 'Chain ID da L3', process.env.DEFAULT_CHAIN_ID)
+    .action(async (opts) => {
+        try {
+            const pk = process.env.PRIVATE_KEY;
+            
+            if (!pk) throw new Error('PRIVATE_KEY não definida! Adicione no .env.');
+            if (!opts.chainId) throw new Error('Chain ID não definido. Passe via -c ou no .env como DEFAULT_CHAIN_ID.');
+
+            const sdk = new WooSDK(pk);
+            await sdk.mintGas(
+                parseInt(opts.chainId),
+                parseInt(opts.amount),
+                opts.receiver
+            );
+        } catch (err) {
+            console.error(" Erro fatal:", err.message);
+        } finally {
             process.exit(0);
         }
     });
