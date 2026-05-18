@@ -35,6 +35,21 @@ new L1 bridge depoit:
 docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1876 --token-id 0 --amount 1000 --receiver aleo1RECEPTOR_AQUI
 ```
 
+run
+```bash
+docker compose up -d
+```
+logs
+
+```bash
+docker compose logs -f node1
+```
+
+check
+```bash
+docker compose ps
+```
+
 ⚠️ You will always need to deploy the DeFi contract and wanpedleo for the wallet to work properly. Both are located in the /aleo programs.
 
 
@@ -183,8 +198,6 @@ cd woosdk
 docker compose up --build
 ```
 
-Isso rodará apenas o terminal RPC com provas "fake", apenas para teste.
-
 Para criar uma nova rede pelo Docker:
 
 ```bash
@@ -204,6 +217,21 @@ Substitua 1988 pelo ID da rede e lembre-se de alterar o endereço do sequenciado
 Para fazer um depósito da L1 para a L3 pelo CLI:
 
 docker compose --profile cli run --rm cli node cli.mjs bridge-in --chain-id 1988 --token-id 0 --amount 1000 --receiver aleo1SEU_ENDERECO_AQUI
+
+run
+```bash
+docker compose up -d
+```
+logs
+
+```bash
+docker compose logs -f node1
+```
+
+check
+```bash
+docker compose ps
+```
 
 ⚠️ Precisará sempre fazer upload do contrato da DeFi e do wanpedleo para melhor funcionamento da wallet. Ambos estão na pasta /aleo programs.
 
