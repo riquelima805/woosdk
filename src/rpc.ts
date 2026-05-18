@@ -1744,9 +1744,9 @@ setInterval(async () => {
 
 async function startNode() {
     try {
-        console.log("⏳ Conectando e verificando tabelas do banco de dados...");
+        console.log(" Conectando e verificando tabelas do banco de dados...");
         
-        // 1. Cria as tabelas PRIMEIRO e espera (await) terminar
+        
         await pgClient.query(`
             CREATE TABLE IF NOT EXISTS kv_store (
                 key VARCHAR(255) PRIMARY KEY,
@@ -1780,7 +1780,7 @@ async function startNode() {
         `);
         console.log(" Tabelas de Dados e Fila de Saques prontas.");
 
-        // 2. Recupera o WAL (se o servidor tiver crashado antes)
+        
         const res = await pgClient.query(`SELECT * FROM wal_log WHERE applied = FALSE ORDER BY id ASC`);
         if (res.rows.length > 0) {
             console.warn(`[WAL] Recuperando ${res.rows.length} TX(s) nao aplicadas apos crash...`);
@@ -1800,10 +1800,10 @@ async function startNode() {
             console.log(`[WAL] Recuperacao concluida.`);
         }
 
-        // 3. AGORA SIM, com as tabelas prontas, carrega o estado
+        
         await loadStateFromDB();
 
-        // 4. Só inicia o RPC e o P2P depois que tudo estiver perfeito na memória
+        
         app.listen(HTTP_PORT, () => {
             console.log(`\n WOO NODE (ID: ${MY_ID}) rodando na porta ${HTTP_PORT}`);
             startP2P(P2P_PORT);
