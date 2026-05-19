@@ -787,4 +787,32 @@ program.command('mint-gas')
         }
     });
 
+program.command('spawn-chain')
+    .description('Inicializa a rede (spawn_chain) e recria o banco de dados sem fazer novo deploy')
+    .option('-c, --chain-id <number>', 'Chain ID', process.env.DEFAULT_CHAIN_ID)
+    .option('-g, --gas-token-id <number>', 'Gas Token ID', process.env.DEFAULT_GAS_TOKEN_ID)
+    .option('-s, --sequencer <address>', 'Sequenciador', process.env.DEFAULT_SEQUENCER_ADDRESS)
+    .option('-m, --mint-supply <number>', 'Quantidade de Gás Inicial', '1000000')
+    .action(async (opts) => {
+        try {
+            await initDB();
+
+            const { pk, vault } = processOptionsAndSyncEnv(opts);
+            const sdk = new WooSDK(pk);
+            
+            console.log(`\n Executando spawn_chain isolado para a rede ${opts.chainId}...`);
+            await sdk.initializeL3(
+                parseInt(opts.chainId), 
+                parseInt(opts.gasTokenId), 
+                opts.sequencer, 
+                parseInt(opts.mintSupply), 
+                vault
+            );
+        } catch (err) {
+            console.error(" Erro fatal:", err);
+        } finally {
+            process.exit(0);
+        }
+    });
+
 program.parse();
