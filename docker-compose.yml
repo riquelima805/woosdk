@@ -14,7 +14,7 @@ services:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./.env.test:/app/.env.test
+      
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U l3user -d l3db"]
       interval: 5s
@@ -79,6 +79,7 @@ services:
     volumes:
       - ./templates:/app/templates
       - ./sandbox:/app/sandbox
+      - ./.env.test:/app/.env.test
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8545/health"]
       interval: 10s
