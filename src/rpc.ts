@@ -862,7 +862,6 @@ if (method === 'woo_sendTransaction') {
             
             if (!fs.existsSync(sandboxDir)) {
                 console.log(` Criando sandbox isolado para token: ${cleanName} na rede ${L3_FOLDER_NAME}`);
-                // [FIX 1 - ASYNC] leo new nao bloqueia o event loop
                 await execFileAsync('leo', ['new', cleanName], { cwd: chainSandboxRoot });
             }
             if (!fs.existsSync(srcDir)) fs.mkdirSync(srcDir, { recursive: true });
@@ -872,14 +871,12 @@ if (method === 'woo_sendTransaction') {
             
             if (!fs.existsSync(aleoFilePath)) {
                 console.log(`Compilando token no sandbox da rede ${L3_FOLDER_NAME}...`);
-                // [FIX 1 - ASYNC] leo build sem bloquear o servidor
                 await execFileAsync('leo', ['build'], { cwd: sandboxDir });
             }
 
             console.log(` Solicitando prova de TRANSFERENCIA para ${tokenId} via Worker Rust...`);
 
             const txId = `0x${crypto.randomBytes(16).toString('hex')}`;
-            // [FIX 2 - WAL] Grava intencao antes de mutar balances
             await walLog(txId, { type: "TOKEN_TRANSFER", from, to, tokenId, numericAmount, nonce }, {
                 tokenBalances: {
                     [tokenId]: {
@@ -1022,11 +1019,11 @@ if (method === 'woo_sendTransaction') {
         }
 
         try {
-            const { sandboxDir, aleoFilePath } = prepareSandbox(contractName, L3_STATE.contracts[contractName].code);
+            const { sandboxDir, aleoFilePath } = await prepareSandbox(contractName, L3_STATE.contracts[contractName].code);
 
             if (!fs.existsSync(aleoFilePath)) {
                 console.log(`[COMPILADOR] Compilando contrato e dependencias na rede ${L3_FOLDER_NAME}...`);
-                // [FIX 1 - ASYNC] leo build sem bloquear o event loop
+                
                 await execFileAsync('leo', ['build'], { cwd: sandboxDir });
             }
 
@@ -1190,7 +1187,7 @@ if (method === 'woo_sendTransaction') {
         L3_STATE.contracts[contractName] = { owner: from, code: leoCode };
         await saveStateToDB();
         
-        const { sandboxDir, aleoFilePath } = prepareSandbox(contractName, leoCode);
+        const { sandboxDir, aleoFilePath } = await prepareSandbox(contractName, leoCode);
         if (!fs.existsSync(aleoFilePath)) {
             console.log(`[COMPILADOR] Compilando contrato ${contractName} (async)...`);
         
@@ -1776,9 +1773,9 @@ async function startNode() {
 
     } catch (e) {
         console.error("Erro fatal ao iniciar o nó:", e);
-        process.exit(1); // Derruba o container se o banco falhar, para o Docker tentar reiniciar
+        process.exit(1); 
     }
 }
 
-// Executa a inicialização
+
 startNode();
