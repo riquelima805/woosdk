@@ -1,3 +1,14 @@
+<div align="center">
+  <img src="./assets/logo.png" alt="Banner WooSDK" width="100%">
+
+  <h1>🚀 WooSDK</h1>
+  <p><b>The simplified solution for building Layer 3 networks on top of the Aleo blockchain.</b></p>
+
+  [![Official Documentation](https://img.shields.io/badge/📖_View_Official_Documentation-2ea44f?style=for-the-badge)](https://riquelima805.github.io/woosdk/)
+
+  <br>
+</div>
+
 # woosdk
 
 ⚠️ Note: Make sure to update the chain-id and the sequencer address. The sequencer address will be the same one used in the bridge for now.
