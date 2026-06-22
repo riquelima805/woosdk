@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WooSDK — Layer 3 Framework for Aleo</title>
+  <meta name="description" content="Open-source SDK for launching custom Layer 3 networks on Aleo. Bundles genesis contract, sequencer, ZK prover, CLI, and wallet." />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png" />
+  <link rel="apple-touch-icon" href="assets/favicon-180.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Tokens ─── */
+    :root {
+      --canvas:      #09090D;
+      --surface:     #13131A;
+      --surface-2:   #1B1A25;
+      --line:        rgba(255,255,255,0.08);
+      --line-strong: rgba(255,255,255,0.14);
+      --ink:         #EDECF0;
+      --ink-muted:   #8E8D9C;
+      --lime:        #C6F613;
+      --lime-dim:    #8AAC0E;
+      --indigo:      #432191;
+      --indigo-mid:  #6B47D6;
+      --indigo-light:#A98EF0;
+      --red:         #FF5A5A;
+
+      --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+      --font-cond: 'IBM Plex Sans Condensed', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+
+      --radius:  6px;
+      --radius-lg: 12px;
+    }
+
+    /* ─── Reset ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+    code, pre { font-family: var(--font-mono); }
+
+    /* ─── Layout helpers ─── */
+    .container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .section {
+      padding: 96px 0;
+    }
+    .section-sm {
+      padding: 64px 0;
+    }
+
+    /* ─── Typography ─── */
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 16px;
+    }
+    h1, h2, h3 {
+      font-family: var(--font-cond);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+    }
+    h1 { font-size: clamp(42px, 7vw, 80px); }
+    h2 { font-size: clamp(28px, 4vw, 46px); }
+    h3 { font-size: 20px; font-family: var(--font-sans); font-weight: 600; line-height: 1.3; }
+    p { color: var(--ink-muted); }
+    strong { color: var(--ink); font-weight: 500; }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      border: none;
+      transition: opacity .15s, transform .15s;
+    }
+    .btn:hover { opacity: .85; transform: translateY(-1px); }
+    .btn-lime {
+      background: var(--lime);
+      color: #0A0A0D;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line-strong);
+    }
+    .btn-ghost:hover { border-color: var(--indigo-light); color: var(--indigo-light); }
+
+    /* ─── Nav ─── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9,9,13,0.88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo img {
+      height: 30px;
+      width: auto;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px;
+      font-family: var(--font-mono);
+      color: var(--ink-muted);
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      transition: color .15s, background .15s;
+    }
+    .nav-links a:hover { color: var(--ink); background: var(--surface); }
+    .nav-links .nav-gh {
+      color: var(--lime);
+      border: 1px solid rgba(198,246,19,0.3);
+    }
+    .nav-links .nav-gh:hover { background: rgba(198,246,19,0.08); }
+    .nav-mobile-toggle { display: none; }
+
+    /* ─── Hero ─── */
+    .hero {
+      padding: 100px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 80% 50%, rgba(67,33,145,0.22) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 10% 80%, rgba(198,246,19,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+    .hero-logo {
+      margin-bottom: 28px;
+    }
+    .hero-logo img {
+      height: 52px;
+      width: auto;
+    }
+    .hero-h1 { color: var(--ink); margin-bottom: 20px; }
+    .hero-h1 em {
+      font-style: normal;
+      color: var(--lime);
+    }
+    .hero-sub {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--ink-muted);
+      max-width: 520px;
+      margin-bottom: 36px;
+    }
+    .hero-ctas {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hero-stat-val {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .hero-stat-label {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--ink-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ─── Hero diagram (right col) ─── */
+    .hero-diagram {
+      position: relative;
+    }
+    .hero-diagram svg {
+      width: 100%;
+      height: auto;
+    }
+
+    /* ─── Marquee / divider ─── */
+    .marquee-wrap {
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+      overflow: hidden;
+      padding: 14px 0;
+    }
+    .marquee-track {
+      display: flex;
+      gap: 0;
+      white-space: nowrap;
+      animation: marquee 28s linear infinite;
+    }
+    .marquee-item {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ink-muted);
+      padding: 0 32px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .marquee-item .dot {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--lime);
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    @keyframes marquee {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ─── Features ─── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .feature-card {
+      background: var(--surface);
+      padding: 36px 28px;
+      transition: background .2s;
+    }
+    .feature-card:hover { background: var(--surface-2); }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(67,33,145,0.25);
+      border: 1px solid rgba(107,71,214,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+    .feature-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--indigo-light);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .feature-card h3 {
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+    .feature-card p {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ─── How It Works ─── */
+    #how-it-works { background: var(--surface); }
+    .hiw-header {
+      max-width: 560px;
+      margin-bottom: 64px;
+    }
+    .hiw-pipeline {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin-bottom: 64px;
+    }
+    .hiw-step {
+      flex: 1;
+      position: relative;
+      padding: 28px 24px 28px 24px;
+      background: var(--canvas);
+      border: 1px solid var(--line);
+      border-right: none;
+    }
+    .hiw-step:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+    .hiw-step:last-child  { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; border-right: 1px solid var(--line); }
+    .hiw-step::after {
+      content: '';
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      background: var(--canvas);
+      border: 1px solid var(--indigo);
+      border-left: none;
+      border-bottom: none;
+      transform: translateY(-50%) rotate(45deg);
+      z-index: 2;
+    }
+    .hiw-step:last-child::after { display: none; }
+    .hiw-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--lime);
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .hiw-step-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .hiw-step p {
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .hiw-diagram-caption {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-top: 16px;
+    }
+
+    /* ─── Benefits ─── */
+    .benefits-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: start;
+    }
+    .benefits-left h2 { margin-bottom: 16px; }
+    .benefits-left p  { margin-bottom: 32px; }
+    .benefits-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .benefits-list li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .benefit-mark {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(198,246,19,0.12);
+      border: 1px solid rgba(198,246,19,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+    .benefit-mark svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--lime);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .benefits-list li span {
+      font-size: 15px;
+      color: var(--ink-muted);
+    }
+    .benefits-list li strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+    .benefits-right {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .benefit-tile {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+    }
+    .benefit-tile:first-child {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, rgba(67,33,145,0.3) 0%, rgba(67,33,145,0.05) 100%);
+      border-color: rgba(107,71,214,0.4);
+    }
+    .tile-val {
+      font-family: var(--font-cond);
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--lime);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .tile-label {
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+
+    /* ─── Quick Start ─── */
+    #quick-start { background: var(--surface); }
+    .qs-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 0;
+    }
+    .qs-tab {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 10px 18px;
+      color: var(--ink-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      letter-spacing: 0.04em;
+    }
+    .qs-tab.active {
+      color: var(--lime);
+      border-bottom-color: var(--lime);
+    }
+    .qs-panel { display: none; }
+    .qs-panel.active { display: block; }
+    .qs-card {
+      background: var(--canvas);
+      border: 1px solid var(--line);
+      border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+      overflow: hidden;
+    }
+    .qs-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+    }
+    .qs-card-title {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+    .qs-card-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .qs-card-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--line-strong);
+    }
+    .code-block {
+      padding: 24px;
+      overflow-x: auto;
+    }
+    .code-block pre {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--ink);
+      white-space: pre;
+    }
+    .code-block .c { color: var(--ink-muted); } /* comment */
+    .code-block .kw { color: var(--indigo-light); } /* keyword */
+    .code-block .str { color: var(--lime); } /* string/value */
+    .code-block .cmd { color: var(--lime); } /* command */
+    .code-block .flag { color: var(--indigo-light); } /* flags */
+
+    .qs-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .qs-step-item {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .qs-step-item:last-child { border-bottom: none; }
+    .qs-step-num {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--indigo-light);
+      padding: 20px 0 20px 20px;
+      border-right: 1px solid var(--line);
+    }
+    .qs-step-body {
+      padding: 20px 24px;
+    }
+    .qs-step-body h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .qs-step-body p {
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    /* Warning blocks */
+    .warning {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: rgba(255,90,90,0.06);
+      border: 1px solid rgba(255,90,90,0.2);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 16px 0;
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .warning-icon {
+      flex-shrink: 0;
+      font-size: 14px;
+      margin-top: 1px;
+    }
+    .warning strong { color: var(--red); }
+    .info {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: rgba(169,142,240,0.06);
+      border: 1px solid rgba(169,142,240,0.2);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 16px 0;
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+    .info-icon { flex-shrink: 0; margin-top: 1px; }
+    .info strong { color: var(--indigo-light); }
+
+    /* ─── Docs ─── */
+    #docs { scroll-margin-top: 70px; }
+    .docs-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+    .docs-sidebar {
+      position: sticky;
+      top: 80px;
+    }
+    .docs-nav-group {
+      margin-bottom: 24px;
+    }
+    .docs-nav-group-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+      padding-left: 8px;
+    }
+    .docs-nav-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .docs-nav-links a {
+      display: block;
+      font-size: 13px;
+      color: var(--ink-muted);
+      padding: 6px 8px;
+      border-radius: 4px;
+      border-left: 2px solid transparent;
+      transition: all .15s;
+    }
+    .docs-nav-links a:hover,
+    .docs-nav-links a.active {
+      color: var(--lime);
+      border-left-color: var(--lime);
+      background: rgba(198,246,19,0.05);
+    }
+    .docs-content {
+      min-width: 0;
+    }
+    .docs-section {
+      margin-bottom: 64px;
+      scroll-margin-top: 80px;
+    }
+    .docs-section h2 {
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+    .docs-section h3 {
+      font-size: 17px;
+      margin: 32px 0 10px;
+      color: var(--ink);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    .docs-section p {
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+    .docs-section ul, .docs-section ol {
+      padding-left: 20px;
+      margin-bottom: 14px;
+    }
+    .docs-section li {
+      font-size: 15px;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+    }
+    .docs-section li strong { color: var(--ink); }
+    .inline-code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--surface-2);
+      color: var(--indigo-light);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+    }
+    .cmd-block {
+      background: var(--canvas);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .cmd-block-header {
+      padding: 8px 16px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cmd-block-header::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--lime);
+      opacity: 0.6;
+    }
+    .cmd-block pre {
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--ink);
+    }
+    .cmd-block pre .comment { color: var(--ink-muted); }
+    .cmd-block pre .value   { color: var(--lime); }
+    .cmd-block pre .flag    { color: var(--indigo-light); }
+
+    /* ─── Architecture diagram ─── */
+    .arch-diagram {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin: 24px 0;
+      overflow: hidden;
+    }
+    .arch-diagram svg {
+      width: 100%;
+      height: auto;
+    }
+
+    /* ─── Troubleshooting ─── */
+    .trouble-item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .trouble-q {
+      padding: 14px 18px;
+      background: var(--surface);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .trouble-q:hover { background: var(--surface-2); }
+    .trouble-q .arrow {
+      font-size: 12px;
+      color: var(--ink-muted);
+      transition: transform .2s;
+    }
+    .trouble-item.open .arrow { transform: rotate(90deg); }
+    .trouble-a {
+      display: none;
+      padding: 0 18px 16px;
+      background: var(--surface);
+      font-size: 14px;
+      color: var(--ink-muted);
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+    .trouble-item.open .trouble-a { display: block; }
+
+    /* ─── CTA band ─── */
+    .cta-band {
+      background: linear-gradient(135deg, rgba(67,33,145,0.5) 0%, rgba(9,9,13,1) 60%);
+      border-top: 1px solid rgba(107,71,214,0.4);
+      border-bottom: 1px solid rgba(107,71,214,0.2);
+      padding: 80px 0;
+      text-align: center;
+    }
+    .cta-band h2 { margin-bottom: 14px; }
+    .cta-band p  { margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ─── Footer ─── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      padding: 40px 0;
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-logo img { height: 26px; width: auto; opacity: 0.75; }
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+    .footer-links a {
+      font-size: 13px;
+      font-family: var(--font-mono);
+      color: var(--ink-muted);
+      transition: color .15s;
+    }
+    .footer-links a:hover { color: var(--lime); }
+    .footer-copy {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--ink-muted);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-diagram { display: none; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .benefits-layout { grid-template-columns: 1fr; }
+      .docs-layout { grid-template-columns: 1fr; }
+      .docs-sidebar { display: none; }
+      .hiw-pipeline { flex-direction: column; }
+      .hiw-step { border-right: 1px solid var(--line); border-bottom: none; }
+      .hiw-step::after { display: none; }
+      .hiw-step:first-child { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+      .hiw-step:last-child  { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+    }
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .benefits-right { grid-template-columns: 1fr; }
+      .benefits-right .benefit-tile:first-child { grid-column: 1; }
+      .nav-links { display: none; }
+      .nav-mobile-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        cursor: pointer;
+        background: none;
+        color: var(--ink);
+        font-size: 18px;
+      }
+      .section { padding: 64px 0; }
+    }
+
+    /* ─── Utility ─── */
+    .text-lime   { color: var(--lime); }
+    .text-indigo { color: var(--indigo-light); }
+    .text-muted  { color: var(--ink-muted); }
+    .mb-8  { margin-bottom: 8px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-24 { margin-bottom: 24px; }
+    .mb-32 { margin-bottom: 32px; }
+    .section-divider {
+      height: 1px;
+      background: var(--line);
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <img src="assets/logo.png" alt="WooSDK" />
+      </a>
+      <ul class="nav-links">
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#quick-start">Quick Start</a></li>
+        <li><a href="#docs">Docs</a></li>
+        <li><a href="https://github.com/riquelima805/woosdk" target="_blank" rel="noopener" class="nav-gh">GitHub</a></li>
+      </ul>
+      <button class="nav-mobile-toggle" aria-label="Menu">&#9776;</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="eyebrow">Open Source &mdash; Aleo Layer-3 Framework</div>
+        <h1 class="hero-h1">Ship your own<br /><em>L3 network</em><br />on Aleo.</h1>
+        <p class="hero-sub">WooSDK bundles everything you need to launch a fully working Layer 3 chain: genesis contract, sequencer node, ZK prover, CLI, and wallet &mdash; anchored to Aleo, proved with zero-knowledge.</p>
+        <div class="hero-ctas">
+          <a href="#quick-start" class="btn btn-lime">Get started</a>
+          <a href="https://github.com/riquelima805/woosdk" target="_blank" rel="noopener" class="btn btn-ghost">View on GitHub</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-val">5</span>
+            <span class="hero-stat-label">Core components</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-val">L1&rarr;L3</span>
+            <span class="hero-stat-label">Bridge built-in</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-val">ZK</span>
+            <span class="hero-stat-label">Native proofs</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-val">Docker</span>
+            <span class="hero-stat-label">One command</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero diagram -->
+      <div class="hero-diagram">
+        <svg viewBox="0 0 440 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="hg1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#432191" stop-opacity="0.7"/>
+              <stop offset="100%" stop-color="#6B47D6" stop-opacity="0.2"/>
+            </linearGradient>
+            <linearGradient id="hg2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#C6F613" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#C6F613" stop-opacity="0.04"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- Background frame -->
+          <rect x="4" y="4" width="432" height="372" rx="16" fill="#13131A" stroke="#1B1A25" stroke-width="1"/>
+          <!-- Aleo L1 base -->
+          <rect x="140" y="300" width="160" height="48" rx="8" fill="url(#hg1)" stroke="#432191" stroke-width="1.5"/>
+          <text x="220" y="319" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="#A98EF0" font-weight="500">ALEO</text>
+          <text x="220" y="334" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Layer 1</text>
+          <!-- Genesis contract -->
+          <rect x="60" y="212" width="126" height="52" rx="8" fill="#1B1A25" stroke="#432191" stroke-width="1"/>
+          <text x="123" y="231" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#A98EF0">Genesis</text>
+          <text x="123" y="247" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Contract (L1)</text>
+          <!-- L3 Node -->
+          <rect x="254" y="212" width="122" height="52" rx="8" fill="#1B1A25" stroke="#6B47D6" stroke-width="1"/>
+          <text x="315" y="231" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#A98EF0">Sequencer</text>
+          <text x="315" y="247" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">L3 Node</text>
+          <!-- ZK Prover -->
+          <rect x="60" y="128" width="126" height="52" rx="8" fill="#1B1A25" stroke="#C6F613" stroke-width="1"/>
+          <text x="123" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#C6F613">ZK Prover</text>
+          <text x="123" y="163" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Zero-Knowledge</text>
+          <!-- CLI -->
+          <rect x="254" y="128" width="122" height="52" rx="8" fill="#1B1A25" stroke="#C6F613" stroke-width="1"/>
+          <text x="315" y="148" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#C6F613">CLI</text>
+          <text x="315" y="163" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Deploy &amp; Manage</text>
+          <!-- Wallet -->
+          <rect x="155" y="44" width="130" height="52" rx="8" fill="url(#hg2)" stroke="#C6F613" stroke-width="1.5" filter="url(#glow)"/>
+          <text x="220" y="63" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#C6F613" font-weight="600">Woo Wallet</text>
+          <text x="220" y="79" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">DEX · RPC · Transfers</text>
+          <!-- Connectors: wallet -> zkprover, wallet -> cli -->
+          <line x1="196" y1="96" x2="161" y2="128" stroke="#C6F613" stroke-width="1" stroke-dasharray="4,3" stroke-opacity="0.5"/>
+          <line x1="244" y1="96" x2="290" y2="128" stroke="#C6F613" stroke-width="1" stroke-dasharray="4,3" stroke-opacity="0.5"/>
+          <!-- zkprover -> genesis -->
+          <line x1="123" y1="180" x2="123" y2="212" stroke="#6B47D6" stroke-width="1.2" stroke-opacity="0.6"/>
+          <!-- cli -> L3 node -->
+          <line x1="315" y1="180" x2="315" y2="212" stroke="#6B47D6" stroke-width="1.2" stroke-opacity="0.6"/>
+          <!-- genesis -> aleo l1 -->
+          <line x1="140" y1="264" x2="168" y2="300" stroke="#432191" stroke-width="1.5"/>
+          <!-- l3 node -> aleo l1 -->
+          <line x1="298" y1="264" x2="264" y2="300" stroke="#432191" stroke-width="1.5"/>
+          <!-- genesis <-> l3 bridge arrow -->
+          <path d="M186 238 Q220 225 254 238" stroke="#C6F613" stroke-width="1" fill="none" stroke-dasharray="3,3" stroke-opacity="0.6"/>
+          <polygon points="250,232 258,240 248,242" fill="#C6F613" fill-opacity="0.6"/>
+          <!-- Label bridge -->
+          <text x="220" y="222" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#C6F613" fill-opacity="0.7">bridge</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── MARQUEE ─── -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item"><span class="dot"></span>Genesis Contract</span>
+    <span class="marquee-item"><span class="dot"></span>L3 Sequencer</span>
+    <span class="marquee-item"><span class="dot"></span>ZK Prover</span>
+    <span class="marquee-item"><span class="dot"></span>CLI Tooling</span>
+    <span class="marquee-item"><span class="dot"></span>Woo Wallet</span>
+    <span class="marquee-item"><span class="dot"></span>L1&rarr;L3 Bridge</span>
+    <span class="marquee-item"><span class="dot"></span>Aleo Testnet</span>
+    <span class="marquee-item"><span class="dot"></span>Docker Deploy</span>
+    <span class="marquee-item"><span class="dot"></span>Custom Chain-ID</span>
+    <span class="marquee-item"><span class="dot"></span>Wrapped Aleo</span>
+    <span class="marquee-item"><span class="dot"></span>DeFi DEX</span>
+    <span class="marquee-item"><span class="dot"></span>Open Source</span>
+    <!-- duplicate for seamless loop -->
+    <span class="marquee-item"><span class="dot"></span>Genesis Contract</span>
+    <span class="marquee-item"><span class="dot"></span>L3 Sequencer</span>
+    <span class="marquee-item"><span class="dot"></span>ZK Prover</span>
+    <span class="marquee-item"><span class="dot"></span>CLI Tooling</span>
+    <span class="marquee-item"><span class="dot"></span>Woo Wallet</span>
+    <span class="marquee-item"><span class="dot"></span>L1&rarr;L3 Bridge</span>
+    <span class="marquee-item"><span class="dot"></span>Aleo Testnet</span>
+    <span class="marquee-item"><span class="dot"></span>Docker Deploy</span>
+    <span class="marquee-item"><span class="dot"></span>Custom Chain-ID</span>
+    <span class="marquee-item"><span class="dot"></span>Wrapped Aleo</span>
+    <span class="marquee-item"><span class="dot"></span>DeFi DEX</span>
+    <span class="marquee-item"><span class="dot"></span>Open Source</span>
+  </div>
+</div>
+
+<!-- ─── FEATURES ─── -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="eyebrow">SDK Components</div>
+    <h2 style="margin-bottom:12px;">Everything your L3 needs,<br />assembled and ready.</h2>
+    <p style="margin-bottom:48px; max-width:520px;">Five tightly-integrated layers that handle the full lifecycle from chain genesis to end-user wallet interactions.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg>
+        </div>
+        <h3>Genesis Contract</h3>
+        <p>The on-chain anchor on Aleo L1. Manages batch anchoring, staking administration, and the vault bridge. Deployed once per network.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.64 5.64l1.41 1.41M16.95 16.95l1.41 1.41M5.64 18.36l1.41-1.41M16.95 7.05l1.41-1.41"/></svg>
+        </div>
+        <h3>L3 Sequencer Node</h3>
+        <p>Maintains the local Layer 3 state. Acts as the network sequencer, ordering transactions and batching them for submission to L1.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3>ZK Prover</h3>
+        <p>A Rust-powered prover that generates and verifies Zero-Knowledge Proofs for every transaction on your L3, inheriting Aleo's privacy guarantees.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        </div>
+        <h3>CLI</h3>
+        <p>Deploy a new network, mint the initial gas token, activate the chain, and trigger L1&rarr;L3 bridge deposits &mdash; all from a single command-line tool.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 5v14M8 5v14"/></svg>
+        </div>
+        <h3>Woo Wallet</h3>
+        <p>A browser-based interface built for your L3. Supports custom RPC endpoints, token transfers, a built-in DEX, and contract deployment.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M7 16l-4-4 4-4M17 8l4 4-4 4M14 4l-4 16"/></svg>
+        </div>
+        <h3>L1 &rarr; L3 Bridge</h3>
+        <p>Move Aleo Testnet funds from L1 directly into your L3, minting Wrapped Aleo. Both CLI and the Leo contract templates are included.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ─── HOW IT WORKS ─── -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="hiw-header">
+      <div class="eyebrow">Architecture</div>
+      <h2>Five layers. One transaction path.</h2>
+      <p style="margin-top:12px;">From the moment a user submits a transaction in the wallet to the moment proof lands on Aleo L1, every component hands off cleanly to the next.</p>
+    </div>
+
+    <!-- Pipeline -->
+    <div class="hiw-pipeline">
+      <div class="hiw-step">
+        <div class="hiw-num">01</div>
+        <div class="hiw-step-title">CLI sets up the chain</div>
+        <p>Run <code style="font-size:12px;color:var(--lime);">cli.mjs full</code> with your chain ID and gas token. The CLI deploys the genesis contract to Aleo L1 and mints the initial supply.</p>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">02</div>
+        <div class="hiw-step-title">Sequencer accepts txs</div>
+        <p>Your L3 node receives transactions from the wallet or RPC, orders them, and maintains the local chain state.</p>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">03</div>
+        <div class="hiw-step-title">ZK Prover generates proofs</div>
+        <p>The Rust prover creates a Zero-Knowledge Proof for each batch of transactions, ensuring validity without revealing private data.</p>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">04</div>
+        <div class="hiw-step-title">Batch anchors on L1</div>
+        <p>The genesis contract on Aleo L1 receives the proof and anchors the batch, securing L3 finality on the base layer.</p>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">05</div>
+        <div class="hiw-step-title">Wallet closes the loop</div>
+        <p>Users query the RPC from the wallet, see confirmed balances, and can bridge back from L3 to L1 whenever needed.</p>
+      </div>
+    </div>
+
+    <!-- Architecture SVG -->
+    <div class="arch-diagram">
+      <svg viewBox="0 0 880 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#6B47D6"/>
+          </marker>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#C6F613"/>
+          </marker>
+        </defs>
+
+        <!-- User / Wallet -->
+        <rect x="20" y="100" width="120" height="80" rx="8" fill="#1B1A25" stroke="#C6F613" stroke-width="1.5"/>
+        <text x="80" y="135" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="#C6F613" font-weight="600">Woo Wallet</text>
+        <text x="80" y="152" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">User &amp; RPC</text>
+
+        <!-- Arrow wallet -> sequencer -->
+        <line x1="140" y1="140" x2="188" y2="140" stroke="#6B47D6" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <!-- Sequencer -->
+        <rect x="190" y="100" width="130" height="80" rx="8" fill="#1B1A25" stroke="#432191" stroke-width="1.5"/>
+        <text x="255" y="133" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="#A98EF0" font-weight="600">Sequencer</text>
+        <text x="255" y="149" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">L3 Node</text>
+        <text x="255" y="164" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Orders txs</text>
+
+        <!-- Arrow sequencer -> zk prover -->
+        <line x1="320" y1="140" x2="368" y2="140" stroke="#6B47D6" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <!-- ZK Prover -->
+        <rect x="370" y="100" width="130" height="80" rx="8" fill="#1B1A25" stroke="#C6F613" stroke-width="1"/>
+        <text x="435" y="133" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="#C6F613" font-weight="600">ZK Prover</text>
+        <text x="435" y="149" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Rust · Proof</text>
+        <text x="435" y="164" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Generation</text>
+
+        <!-- Arrow zk -> genesis -->
+        <line x1="500" y1="140" x2="548" y2="140" stroke="#C6F613" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- Genesis Contract -->
+        <rect x="550" y="100" width="140" height="80" rx="8" fill="#1B1A25" stroke="#432191" stroke-width="1.5"/>
+        <text x="620" y="133" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="#A98EF0" font-weight="600">Genesis</text>
+        <text x="620" y="149" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Contract (L1)</text>
+        <text x="620" y="164" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Anchor &amp; Bridge</text>
+
+        <!-- Arrow genesis -> aleo L1 -->
+        <line x1="690" y1="140" x2="738" y2="140" stroke="#432191" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <!-- Aleo L1 -->
+        <rect x="740" y="100" width="120" height="80" rx="8" fill="#1B1A25" stroke="#432191" stroke-width="2"/>
+        <text x="800" y="133" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="#A98EF0" font-weight="700">ALEO</text>
+        <text x="800" y="149" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Layer 1</text>
+        <text x="800" y="164" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8E8D9C">Finality</text>
+
+        <!-- Bridge back label (bottom curve) -->
+        <path d="M740 185 Q620 230 500 185" stroke="#C6F613" stroke-width="1" fill="none" stroke-dasharray="4,3" stroke-opacity="0.5"/>
+        <text x="620" y="225" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#C6F613" fill-opacity="0.7">L1 &rarr; L3 bridge deposit</text>
+
+        <!-- CLI annotation (top) -->
+        <rect x="230" y="20" width="100" height="36" rx="6" fill="#13131A" stroke="#C6F613" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="280" y="37" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#C6F613">CLI</text>
+        <text x="280" y="50" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#8E8D9C">Deploys chain</text>
+        <line x1="280" y1="56" x2="280" y2="100" stroke="#C6F613" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ─── BENEFITS ─── -->
+<section class="section" id="benefits">
+  <div class="container">
+    <div class="benefits-layout">
+      <div class="benefits-left">
+        <div class="eyebrow">Why WooSDK</div>
+        <h2>Build chains,<br />not infrastructure.</h2>
+        <p>Launching a custom L3 on Aleo from scratch means months of work: writing the anchor contract, setting up a sequencer, integrating a ZK backend, and building a wallet. WooSDK collapses that into a git clone and one command.</p>
+        <ul class="benefits-list">
+          <li>
+            <div class="benefit-mark"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            <span><strong>Instant genesis</strong> Deploy your network's anchor contract to Aleo L1 and mint your gas token in one CLI call.</span>
+          </li>
+          <li>
+            <div class="benefit-mark"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            <span><strong>ZK proofs included</strong> The Rust prover is pre-integrated. No cryptography expertise required to ship a privacy-preserving chain.</span>
+          </li>
+          <li>
+            <div class="benefit-mark"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            <span><strong>Bridge on day one</strong> L1-to-L3 deposits work out of the box. Your users can fund L3 wallets directly from Aleo Testnet.</span>
+          </li>
+          <li>
+            <div class="benefit-mark"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            <span><strong>Full wallet UI</strong> Woo Wallet ships with DEX, custom RPC, and contract deployment &mdash; ready for your end users.</span>
+          </li>
+          <li>
+            <div class="benefit-mark"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            <span><strong>Docker or manual</strong> Run the entire stack with <code class="inline-code">docker compose up</code> or configure each service manually for production.</span>
+          </li>
+        </ul>
+      </div>
+      <div class="benefits-right">
+        <div class="benefit-tile">
+          <div class="tile-val">~1 min</div>
+          <div class="tile-label">From clone to running L3 node with Docker</div>
+        </div>
+        <div class="benefit-tile">
+          <div class="tile-val">5</div>
+          <div class="tile-label">Pre-built components</div>
+        </div>
+        <div class="benefit-tile">
+          <div class="tile-val">ZK</div>
+          <div class="tile-label">Native zero-knowledge proofs</div>
+        </div>
+        <div class="benefit-tile">
+          <div class="tile-val">MIT</div>
+          <div class="tile-label">Open source license</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ─── QUICK START ─── -->
+<section class="section section-sm" id="quick-start">
+  <div class="container">
+    <div class="eyebrow">Quick Start</div>
+    <h2 style="margin-bottom:12px;">Up and running in minutes.</h2>
+    <p style="margin-bottom:40px; max-width:560px;">Two paths: Docker gets you a full working environment instantly. Manual setup gives you control over each service for production deployments.</p>
+
+    <!-- Tabs -->
+    <div class="qs-tabs">
+      <button class="qs-tab active" data-tab="docker">Docker (recommended)</button>
+      <button class="qs-tab" data-tab="manual">Manual setup</button>
+      <button class="qs-tab" data-tab="bridge">L1&rarr;L3 Bridge</button>
+    </div>
+
+    <!-- Docker panel -->
+    <div class="qs-panel active" id="tab-docker">
+      <div class="qs-card">
+        <div class="qs-card-header">
+          <span class="qs-card-title">Terminal</span>
+          <div class="qs-card-dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="code-block">
+<pre><span class="c"># Clone the repository</span>
+<span class="cmd">git clone</span> https://github.com/riquelima805/woosdk.git
+<span class="cmd">cd</span> woosdk
+
+<span class="c"># Start all services</span>
+<span class="cmd">docker compose up</span> --build
+
+<span class="c"># Deploy a new network (replace 1988 with your chain ID)</span>
+docker compose <span class="flag">--profile cli</span> run <span class="flag">--rm</span> cli \
+  node cli.mjs full \
+  <span class="flag">--chain-id</span> <span class="str">1988</span> \
+  <span class="flag">--gas-token-id</span> <span class="str">1</span>
+
+<span class="c"># View logs</span>
+<span class="cmd">docker compose logs</span> -f node1
+
+<span class="c"># Check service status</span>
+<span class="cmd">docker compose ps</span></pre>
+        </div>
+      </div>
+      <div class="warning">
+        <span class="warning-icon">&#9888;</span>
+        <span>Always update the <strong>chain-id</strong> and <strong>sequencer address</strong> before launching. The sequencer address is also used as the bridge Vault address.</span>
+      </div>
+    </div>
+
+    <!-- Manual panel -->
+    <div class="qs-panel" id="tab-manual">
+      <div class="qs-card">
+        <div class="qs-steps">
+          <div class="qs-step-item">
+            <div class="qs-step-num">01</div>
+            <div class="qs-step-body">
+              <h4>Install dependencies</h4>
+              <p>Requires Node.js v18+, Rust v1.70+, and Leo v2.0.0+. Add the Leo executable to your PATH.</p>
+              <div class="cmd-block">
+                <div class="cmd-block-header">bash</div>
+                <pre>git clone https://github.com/riquelima805/woosdk.git
+cd woosdk
+npm install</pre>
+              </div>
+            </div>
+          </div>
+          <div class="qs-step-item">
+            <div class="qs-step-num">02</div>
+            <div class="qs-step-body">
+              <h4>Install wallet dependencies</h4>
+              <div class="cmd-block">
+                <div class="cmd-block-header">bash</div>
+                <pre>cd woo-wallet
+npm install</pre>
+              </div>
+            </div>
+          </div>
+          <div class="qs-step-item">
+            <div class="qs-step-num">03</div>
+            <div class="qs-step-body">
+              <h4>Build the ZK Prover</h4>
+              <div class="cmd-block">
+                <div class="cmd-block-header">bash</div>
+                <pre>cd ../zk-prover
+cargo build</pre>
+              </div>
+            </div>
+          </div>
+          <div class="qs-step-item">
+            <div class="qs-step-num">04</div>
+            <div class="qs-step-body">
+              <h4>Configure environment</h4>
+              <p>Return to the root folder and add your Aleo private key to the <code class="inline-code">.env</code> file. You need Testnet credits from <a href="https://faucet.aleo.org" target="_blank" rel="noopener" style="color:var(--indigo-light)">faucet.aleo.org</a>.</p>
+            </div>
+          </div>
+          <div class="qs-step-item">
+            <div class="qs-step-num">05</div>
+            <div class="qs-step-body">
+              <h4>Deploy the network</h4>
+              <p>This command deploys the system, mints the initial gas token, and activates the network.</p>
+              <div class="cmd-block">
+                <div class="cmd-block-header">bash</div>
+                <pre>node cli.mjs full \
+  <span class="flag">--chain-id</span> <span class="value">888</span> \
+  <span class="flag">--gas-token-id</span> <span class="value">1</span> \
+  <span class="flag">--sequencer</span> <span class="value">&lt;SEQUENCER_ADDRESS&gt;</span></pre>
+              </div>
+            </div>
+          </div>
+          <div class="qs-step-item">
+            <div class="qs-step-num">06</div>
+            <div class="qs-step-body">
+              <h4>Start all services</h4>
+              <p>Run each in a separate terminal.</p>
+              <div class="cmd-block">
+                <div class="cmd-block-header">RPC server &mdash; run from /woosdk</div>
+                <pre>npx tsx src/rpc.ts</pre>
+              </div>
+              <div class="cmd-block">
+                <div class="cmd-block-header">ZK Prover &mdash; run from /woosdk/zk-prover</div>
+                <pre>cargo run --release</pre>
+              </div>
+              <div class="cmd-block">
+                <div class="cmd-block-header">Wallet &mdash; run from /woo-wallet</div>
+                <pre>npm run dev</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="info">
+        <span class="info-icon">&#8505;</span>
+        <span><strong>Required contracts:</strong> You must deploy the DeFi contract and <code class="inline-code">wanpedleo</code> for the wallet to work correctly. Both are located in <code class="inline-code">/aleo programs</code>.</span>
+      </div>
+    </div>
+
+    <!-- Bridge panel -->
+    <div class="qs-panel" id="tab-bridge">
+      <div class="qs-card">
+        <div class="qs-card-header">
+          <span class="qs-card-title">L1 to L3 deposit &mdash; via CLI (Docker)</span>
+          <div class="qs-card-dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="code-block">
+<pre><span class="c"># Bridge Aleo Testnet funds into your L3</span>
+docker compose <span class="flag">--profile cli</span> run <span class="flag">--rm</span> cli \
+  node cli.mjs bridge-in \
+  <span class="flag">--chain-id</span> <span class="str">1988</span> \
+  <span class="flag">--token-id</span> <span class="str">0</span> \
+  <span class="flag">--amount</span> <span class="str">1000</span> \
+  <span class="flag">--receiver</span> <span class="str">aleo1YOUR_ADDRESS_HERE</span></pre>
+        </div>
+      </div>
+      <p style="font-size:14px; margin:16px 0 20px;">Or use the Leo contract directly from the genesis contract's <code class="inline-code">templates</code> folder:</p>
+      <div class="qs-card">
+        <div class="qs-card-header">
+          <span class="qs-card-title">leo execute (direct L1 call)</span>
+          <div class="qs-card-dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="code-block">
+<pre>leo execute bridge_in \
+  <span class="str">2011u64</span> <span class="str">1u64</span> <span class="str">5000000u64</span> \
+  <span class="str">&lt;L1_RECEIVER_ADDRESS&gt;</span> \
+  <span class="str">&lt;VAULT_ADDRESS&gt;</span> \
+  <span class="flag">--broadcast</span> \
+  <span class="flag">--network</span> testnet \
+  <span class="flag">--endpoint</span> <span class="str">"https://api.explorer.aleo.org/v1/testnet3"</span> \
+  <span class="flag">--private-key</span> <span class="str">"YOUR_PRIVATE_KEY"</span></pre>
+        </div>
+      </div>
+      <div class="info">
+        <span class="info-icon">&#8505;</span>
+        <span>Bridged funds arrive as <strong>Wrapped Aleo</strong> on your L3. The bridge vault address and sequencer address are the same for now.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ─── DOCUMENTATION ─── -->
+<section class="section" id="docs">
+  <div class="container">
+    <div class="docs-layout">
+
+      <!-- Sidebar -->
+      <aside class="docs-sidebar">
+        <div class="docs-nav-group">
+          <div class="docs-nav-group-title">Overview</div>
+          <ul class="docs-nav-links">
+            <li><a href="#doc-overview" class="active">What is WooSDK</a></li>
+            <li><a href="#doc-requirements">Requirements</a></li>
+          </ul>
+        </div>
+        <div class="docs-nav-group">
+          <div class="docs-nav-group-title">SDK Components</div>
+          <ul class="docs-nav-links">
+            <li><a href="#doc-genesis">Genesis Contract</a></li>
+            <li><a href="#doc-node">L3 Node</a></li>
+            <li><a href="#doc-zk">ZK Prover</a></li>
+            <li><a href="#doc-cli">CLI</a></li>
+            <li><a href="#doc-wallet">Wallet</a></li>
+          </ul>
+        </div>
+        <div class="docs-nav-group">
+          <div class="docs-nav-group-title">Guides</div>
+          <ul class="docs-nav-links">
+            <li><a href="#doc-installation">Installation</a></li>
+            <li><a href="#doc-deploy">Deploy a Network</a></li>
+            <li><a href="#doc-bridge">Bridge (L1&rarr;L3)</a></li>
+            <li><a href="#doc-testing">Testing Features</a></li>
+          </ul>
+        </div>
+        <div class="docs-nav-group">
+          <div class="docs-nav-group-title">Reference</div>
+          <ul class="docs-nav-links">
+            <li><a href="#doc-troubleshooting">Troubleshooting</a></li>
+            <li><a href="#doc-notes">Development Notes</a></li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <main class="docs-content">
+
+        <div class="docs-section" id="doc-overview">
+          <div class="eyebrow">Overview</div>
+          <h2>What is WooSDK?</h2>
+          <p>WooSDK is an open-source framework for developers who want to launch Layer 3 networks on top of <a href="https://aleo.org" target="_blank" rel="noopener" style="color:var(--indigo-light)">Aleo</a>. It removes the infrastructure heavy-lifting by packaging five tightly integrated components into a single repository that can be bootstrapped with Docker or configured manually for production.</p>
+          <p>A WooSDK chain is anchored to Aleo L1 via a genesis contract, sequences transactions locally, proves them with Zero-Knowledge Proofs, and exposes an EVM-style RPC for wallet and dApp integrations.</p>
+          <div class="arch-diagram" style="padding:20px 16px;">
+            <p style="font-family:var(--font-mono); font-size:12px; color:var(--indigo-light); margin-bottom:8px;">SDK Component Map</p>
+            <table style="width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:12px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); color:var(--ink-muted); font-weight:500;">Component</th>
+                  <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); color:var(--ink-muted); font-weight:500;">Language</th>
+                  <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); color:var(--ink-muted); font-weight:500;">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="padding:8px 12px; color:var(--lime);">Genesis Contract</td><td style="padding:8px 12px; color:var(--ink-muted);">Leo</td><td style="padding:8px 12px; color:var(--ink-muted);">Anchors batches, staking, bridge on Aleo L1</td></tr>
+                <tr style="background:rgba(255,255,255,0.02)"><td style="padding:8px 12px; color:var(--indigo-light);">L3 Node</td><td style="padding:8px 12px; color:var(--ink-muted);">Node.js / TypeScript</td><td style="padding:8px 12px; color:var(--ink-muted);">Sequencer, local L3 state, RPC</td></tr>
+                <tr><td style="padding:8px 12px; color:var(--lime);">ZK Prover</td><td style="padding:8px 12px; color:var(--ink-muted);">Rust</td><td style="padding:8px 12px; color:var(--ink-muted);">Zero-Knowledge Proof generation &amp; verification</td></tr>
+                <tr style="background:rgba(255,255,255,0.02)"><td style="padding:8px 12px; color:var(--indigo-light);">CLI</td><td style="padding:8px 12px; color:var(--ink-muted);">Node.js</td><td style="padding:8px 12px; color:var(--ink-muted);">Deploy chains, mint tokens, bridge</td></tr>
+                <tr><td style="padding:8px 12px; color:var(--lime);">Woo Wallet</td><td style="padding:8px 12px; color:var(--ink-muted);">Node.js / Web</td><td style="padding:8px 12px; color:var(--ink-muted);">User interface: transfers, DEX, RPC, deploy</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-requirements">
+          <h2>Requirements</h2>
+          <p>Before installing WooSDK, make sure the following runtimes are available in your environment:</p>
+          <ul>
+            <li><strong>Node.js v18 or later</strong> &mdash; <a href="https://nodejs.org" target="_blank" rel="noopener" style="color:var(--indigo-light)">nodejs.org</a></li>
+            <li><strong>Rust v1.70 or later</strong> &mdash; <a href="https://rustup.rs" target="_blank" rel="noopener" style="color:var(--indigo-light)">rustup.rs</a></li>
+            <li><strong>Leo v2.0.0 or later</strong> &mdash; <a href="https://developer.aleo.org/leo" target="_blank" rel="noopener" style="color:var(--indigo-light)">developer.aleo.org/leo</a></li>
+          </ul>
+          <div class="info">
+            <span class="info-icon">&#8505;</span>
+            <span>After installing Leo, make sure the <code class="inline-code">leo</code> executable is on your system <strong>PATH</strong> so the CLI can call it during deployment.</span>
+          </div>
+          <p>For Docker-based setup, only Docker and Docker Compose are required &mdash; all runtimes are bundled in the container images.</p>
+        </div>
+
+        <div class="docs-section" id="doc-genesis">
+          <h2>Genesis Contract (L1)</h2>
+          <p>The Genesis Contract is a Leo smart contract deployed to Aleo L1. It is the on-chain anchor for your entire L3 network and handles three main responsibilities:</p>
+          <h3>Batch anchoring</h3>
+          <p>After the ZK Prover generates a proof for a batch of L3 transactions, the genesis contract receives and records that proof on L1, establishing finality.</p>
+          <h3>Staking management</h3>
+          <p>The genesis contract holds the logic for sequencer staking, allowing you to add economic security to your L3 over time.</p>
+          <h3>Bridge vault</h3>
+          <p>The contract acts as the vault for the L1&rarr;L3 bridge. When users call <code class="inline-code">bridge_in</code>, funds are locked in the vault on L1 and minted as Wrapped Aleo on L3. The sequencer address and vault address are the same entity for now &mdash; this will be decoupled in a future update.</p>
+        </div>
+
+        <div class="docs-section" id="doc-node">
+          <h2>L3 Node (Sequencer)</h2>
+          <p>The L3 Node is the local chain runtime. Written in TypeScript, it does the following:</p>
+          <ul>
+            <li>Receives transactions from the wallet or any RPC-compatible client</li>
+            <li>Orders transactions into batches</li>
+            <li>Maintains the current L3 state (account balances, contract storage)</li>
+            <li>Hands batches off to the ZK Prover</li>
+            <li>Exposes an RPC endpoint for wallet and dApp integration</li>
+          </ul>
+          <p>Start the RPC server from the root directory:</p>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash</div>
+            <pre>npx tsx src/rpc.ts</pre>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-zk">
+          <h2>ZK Prover</h2>
+          <p>The ZK Prover is a Rust binary that generates and verifies Zero-Knowledge Proofs for L3 transaction batches. It runs as a sidecar to the L3 node.</p>
+          <h3>Build</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash &mdash; inside /woosdk/zk-prover</div>
+            <pre>cargo build</pre>
+          </div>
+          <h3>Run in production</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash &mdash; inside /woosdk/zk-prover</div>
+            <pre>cargo run --release</pre>
+          </div>
+          <div class="warning">
+            <span class="warning-icon">&#9888;</span>
+            <span>If you encounter a hyphen error in the Dockerfile, run:<br/>
+            <code class="inline-code" style="display:inline-block;margin-top:8px;">sed -i 's|CMD \["./zk-prover"\]|CMD ["./zk_prover"]|g' ~/woosdk/zk-prover/Dockerfile</code><br/>
+            Then force a rebuild: <code class="inline-code">docker compose build zk_prover --no-cache &amp;&amp; docker compose up -d --force-recreate</code></span>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-cli">
+          <h2>CLI</h2>
+          <p>The CLI (<code class="inline-code">cli.mjs</code>) is the primary tool for network operations. It wraps Leo contract deployment, token minting, and bridge calls into ergonomic subcommands.</p>
+          <h3>full &mdash; deploy a new network</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash</div>
+            <pre>node cli.mjs full \
+  <span class="flag">--chain-id</span> <span class="value">888</span> \
+  <span class="flag">--gas-token-id</span> <span class="value">1</span> \
+  <span class="flag">--sequencer</span> <span class="value">&lt;SEQUENCER_ADDRESS&gt;</span></pre>
+          </div>
+          <p>This deploys the genesis contract, mints the initial gas supply, and activates the network. The sequencer address becomes the bridge vault.</p>
+          <h3>bridge-in &mdash; deposit from L1</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash</div>
+            <pre>node cli.mjs bridge-in \
+  <span class="flag">--chain-id</span> <span class="value">888</span> \
+  <span class="flag">--token-id</span> <span class="value">0</span> \
+  <span class="flag">--amount</span> <span class="value">1000</span> \
+  <span class="flag">--receiver</span> <span class="value">aleo1YOUR_ADDRESS_HERE</span></pre>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-wallet">
+          <h2>Woo Wallet</h2>
+          <p>A web-based wallet built for L3 interactions. It connects to your L3 node's RPC endpoint and supports:</p>
+          <ul>
+            <li><strong>Custom RPC</strong> &mdash; point it at any WooSDK L3 node</li>
+            <li><strong>Token transfers</strong> &mdash; send any L3 token between addresses</li>
+            <li><strong>DEX</strong> &mdash; add liquidity pools (X/Y token pairs) and execute swaps</li>
+            <li><strong>Contract deployment</strong> &mdash; deploy and interact with L3 contracts from the browser</li>
+            <li><strong>Test token minting</strong> &mdash; deploy test tokens and call mint during development</li>
+          </ul>
+          <h3>Start the wallet</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash &mdash; inside /woo-wallet</div>
+            <pre>npm run dev</pre>
+          </div>
+          <div class="info">
+            <span class="info-icon">&#8505;</span>
+            <span>The DeFi contract and <code class="inline-code">wanpedleo</code> must be deployed before the wallet's DEX and bridge features function correctly. Both contracts are in the <code class="inline-code">/aleo programs</code> folder.</span>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-installation">
+          <h2>Installation</h2>
+          <h3>Option A &mdash; Docker (fastest)</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash</div>
+            <pre>git clone https://github.com/riquelima805/woosdk.git
+cd woosdk
+docker compose up --build</pre>
+          </div>
+          <h3>Option B &mdash; Manual</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash &mdash; root dependencies</div>
+            <pre>git clone https://github.com/riquelima805/woosdk.git
+cd woosdk
+npm install</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash &mdash; wallet dependencies</div>
+            <pre>cd woo-wallet
+npm install</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash &mdash; ZK prover (Rust)</div>
+            <pre>cd ../zk-prover
+cargo build</pre>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-deploy">
+          <h2>Deploy a Network</h2>
+          <p>Add your Aleo private key to the <code class="inline-code">.env</code> file in the root folder. You need Testnet credits &mdash; get them at <a href="https://faucet.aleo.org" target="_blank" rel="noopener" style="color:var(--indigo-light)">faucet.aleo.org</a>.</p>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash</div>
+            <pre>node cli.mjs full \
+  <span class="flag">--chain-id</span> <span class="value">888</span> \
+  <span class="flag">--gas-token-id</span> <span class="value">1</span> \
+  <span class="flag">--sequencer</span> <span class="value">&lt;SEQUENCER_ADDRESS&gt;</span></pre>
+          </div>
+          <p>Then start all three services in separate terminals as described in the Quick Start &mdash; RPC, ZK Prover, and Wallet.</p>
+          <div class="warning">
+            <span class="warning-icon">&#9888;</span>
+            <span>If using Docker, update the sequencer address in <code class="inline-code">.env.test</code> before deploying. The chain-id in the CLI command must match the one in your environment config.</span>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-bridge">
+          <h2>Bridge (L1 to L3)</h2>
+          <p>WooSDK supports depositing Aleo Testnet credits from L1 into your L3, producing Wrapped Aleo on L3.</p>
+          <h3>Via CLI</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash</div>
+            <pre>node cli.mjs bridge-in \
+  <span class="flag">--chain-id</span> <span class="value">1988</span> \
+  <span class="flag">--token-id</span> <span class="value">0</span> \
+  <span class="flag">--amount</span> <span class="value">1000</span> \
+  <span class="flag">--receiver</span> <span class="value">aleo1YOUR_ADDRESS_HERE</span></pre>
+          </div>
+          <h3>Via Leo execute</h3>
+          <p>Run directly from the <code class="inline-code">templates</code> folder inside your genesis contract:</p>
+          <div class="cmd-block">
+            <div class="cmd-block-header">bash</div>
+            <pre>leo execute bridge_in \
+  <span class="value">2011u64</span> <span class="value">1u64</span> <span class="value">5000000u64</span> \
+  <span class="value">&lt;L1_RECEIVER_ADDRESS&gt;</span> \
+  <span class="value">&lt;VAULT_ADDRESS&gt;</span> \
+  <span class="flag">--broadcast</span> \
+  <span class="flag">--network</span> testnet \
+  <span class="flag">--endpoint</span> <span class="value">"https://api.explorer.aleo.org/v1/testnet3"</span> \
+  <span class="flag">--private-key</span> <span class="value">"YOUR_PRIVATE_KEY"</span></pre>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-testing">
+          <h2>Testing Features</h2>
+          <h3>Tokens and DeFi</h3>
+          <p>In the Woo Wallet, you can deploy test tokens and call their <code class="inline-code">mint</code> function to create supply. In the DeFi section, add two tokens (X and Y), deposit them, and call the liquidity function to create a pool. The current vault supports up to two tokens at a time.</p>
+          <h3>Running services (quick reference)</h3>
+          <div class="cmd-block">
+            <div class="cmd-block-header">docker &mdash; start background services</div>
+            <pre>docker compose up -d</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-block-header">docker &mdash; tail node logs</div>
+            <pre>docker compose logs -f node1</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-block-header">docker &mdash; check status</div>
+            <pre>docker compose ps</pre>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-troubleshooting">
+          <h2>Troubleshooting</h2>
+
+          <div class="trouble-item">
+            <div class="trouble-q">ZK Prover fails with a hyphen error in Docker <span class="arrow">&#9654;</span></div>
+            <div class="trouble-a">
+              <p>The Dockerfile references <code class="inline-code">./zk-prover</code> (hyphen) but the binary is built as <code class="inline-code">./zk_prover</code> (underscore). Fix with:</p>
+              <div class="cmd-block" style="margin-top:10px;">
+                <div class="cmd-block-header">bash</div>
+                <pre>sed -i 's|CMD \["./zk-prover"\]|CMD ["./zk_prover"]|g' ~/woosdk/zk-prover/Dockerfile
+docker compose build zk_prover --no-cache
+docker compose up -d --force-recreate</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="trouble-item">
+            <div class="trouble-q">Wallet DEX or bridge features are not working <span class="arrow">&#9654;</span></div>
+            <div class="trouble-a">
+              <p>The DeFi contract and <code class="inline-code">wanpedleo</code> must be deployed before the wallet can interact with those features. Both contracts are in <code class="inline-code">/aleo programs</code>. Deploy them with Leo and ensure the addresses are correctly referenced in the wallet config.</p>
+            </div>
+          </div>
+
+          <div class="trouble-item">
+            <div class="trouble-q">Bridge deposits are not arriving on L3 <span class="arrow">&#9654;</span></div>
+            <div class="trouble-a">
+              <p>Verify that the <strong>vault address</strong> in your bridge command matches the <strong>sequencer address</strong> set during network deployment. Also confirm the RPC node is running and connected to the correct chain ID.</p>
+            </div>
+          </div>
+
+          <div class="trouble-item">
+            <div class="trouble-q">CLI deploy fails with a Leo error <span class="arrow">&#9654;</span></div>
+            <div class="trouble-a">
+              <p>Check that the <code class="inline-code">leo</code> binary is on your PATH (<code class="inline-code">which leo</code> should return a result). You need Leo v2.0.0 or later. Also confirm your private key in <code class="inline-code">.env</code> has Testnet credits from <a href="https://faucet.aleo.org" target="_blank" rel="noopener" style="color:var(--indigo-light)">faucet.aleo.org</a>.</span>
+            </div>
+          </div>
+
+          <div class="trouble-item">
+            <div class="trouble-q">Docker Compose services restart immediately after starting <span class="arrow">&#9654;</span></div>
+            <div class="trouble-a">
+              <p>Run <code class="inline-code">docker compose logs -f node1</code> immediately after starting to capture the exit reason. The most common causes are a missing or invalid private key in <code class="inline-code">.env.test</code>, or a chain-id mismatch between the deploy command and the environment config.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="docs-section" id="doc-notes">
+          <h2>Development Notes</h2>
+          <p>WooSDK is under active development. The following known limitations will be addressed in future releases:</p>
+          <ul>
+            <li>The bridge currently accepts any address as a vault. This will be restricted in a future update so only the registered sequencer can act as vault.</li>
+            <li>The RPC currently counts balances only for data provided by the owner as Vault. Multi-source accounting is planned.</li>
+            <li>L3 authentication (Auth layer) is still under development. Authorization checks on L3 are not yet enforced.</li>
+          </ul>
+          <p>Contributions are welcome. See the <a href="https://github.com/riquelima805/woosdk" target="_blank" rel="noopener" style="color:var(--indigo-light)">GitHub repository</a> for open issues and the roadmap.</p>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA BAND ─── -->
+<div class="cta-band">
+  <div class="container">
+    <div class="eyebrow" style="text-align:center;">Open Source</div>
+    <h2>Ready to launch your L3?</h2>
+    <p>Clone the repo, configure your chain ID, and run one command. Your Layer 3 network on Aleo is waiting.</p>
+    <div class="cta-buttons">
+      <a href="https://github.com/riquelima805/woosdk" target="_blank" rel="noopener" class="btn btn-lime">View on GitHub</a>
+      <a href="#quick-start" class="btn btn-ghost">Quick Start Guide</a>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <img src="assets/logo.png" alt="WooSDK" />
+      </div>
+      <ul class="footer-links">
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#quick-start">Quick Start</a></li>
+        <li><a href="#docs">Docs</a></li>
+        <li><a href="https://github.com/riquelima805/woosdk" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+      <span class="footer-copy">WooSDK &mdash; Aleo Layer 3 Framework</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.qs-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      document.querySelectorAll('.qs-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.qs-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + target).classList.add('active');
+    });
+  });
+
+  // Accordion (troubleshooting)
+  document.querySelectorAll('.trouble-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.closest('.trouble-item');
+      item.classList.toggle('open');
+    });
+  });
+
+  // Active docs nav on scroll
+  const docSections = document.querySelectorAll('.docs-section[id]');
+  const navLinks = document.querySelectorAll('.docs-nav-links a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const activeLink = document.querySelector('.docs-nav-links a[href="#' + entry.target.id + '"]');
+        if (activeLink) activeLink.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  docSections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
